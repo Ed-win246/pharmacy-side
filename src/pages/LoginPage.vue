@@ -20,7 +20,7 @@ const showPassword = ref(false);
     <Card class="w-full max-w-[380px] shadow-xl">
       <CardHeader>
         <CardTitle class="items-center justify-center flex">Login To Your Account</CardTitle>
-        <CardDescription>Enter your email below to login to your Account</CardDescription>
+        <CardDescription>Enter your Email below to login to your Account</CardDescription>
       </CardHeader>
       <CardContent>
         <form>
@@ -38,7 +38,6 @@ const showPassword = ref(false);
                 />
               </div>
             </div>
-
             <div class="flex flex-col space-y-1.5">
               <div class="flex items-center">
                 <Label for="password">Password</Label>
