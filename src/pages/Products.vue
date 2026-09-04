@@ -2,6 +2,7 @@
 import { onMounted, ref, reactive } from 'vue';
 import { Plus, Pencil, Trash2, X } from 'lucide-vue-next';
 import api from '@/lib/api';
+import toast from '@tsirosgeorge/toastnotification';
 
 const medicines = ref([]);
 const showModal = ref(false);
@@ -21,6 +22,7 @@ async function fetchMedicines() {
     medicines.value = data;
   } catch (error) {
     console.error('Error fetching medicines', error);
+    toast.error('Failed to fetch medicines. Please try again later.');
   } finally {
     loading.value = false;
   }
@@ -92,8 +94,10 @@ async function deleteMedicine(med) {
   try {
     await api.delete(`/medicines/${med.id}`);
     medicines.value = medicines.value.filter(m => m.id !== med.id);
+    toast.success('Medicine deleted successfully!');
   } catch (error) {
     console.error('Error deleting medicine', error);
+    toast.error('Medicine could not be deleted.');
     alert('Failed to delete medicine.');
   }
 }
@@ -129,14 +133,16 @@ async function saveMedicine() {
       if (index !== -1) {
         medicines.value[index] = data;
       }
+      toast.success('Medicine updated successfully!');
     } else {
       const { data } = await api.post('/medicines', payload);
       medicines.value.unshift(data);
+      toast.success('Medicine registered successfully!');
     }
     closeModal();
   } catch (error) {
     console.error('Error saving medicine', error);
-    alert('Failed to save medicine. Please try again.');
+    toast.error('Failed to save medicine. Please try again.');
   } finally {
     saving.value = false;
   }
