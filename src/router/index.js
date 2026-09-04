@@ -3,7 +3,6 @@ import LoginPage from "@/pages/LoginPage.vue";
 import Dashboard from '@/pages/Dashboard.vue';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import Products from '@/pages/Products.vue';
-import Orders from "@/pages/Orders.vue";
 import Reports from '@/pages/Reports.vue';
 import Settings from '@/pages/Settings.vue';
 
@@ -20,7 +19,6 @@ const routes = [
         children: [
             { path: 'dashboard', name: 'dashboard', component: Dashboard },
             { path: 'products', name: 'products', component: Products },
-            { path: 'orders', name: 'orders', component: Orders },
             { path: 'reports', name: 'reports', component: Reports },
             { path: 'settings', name: 'settings', component: Settings }
         ],
