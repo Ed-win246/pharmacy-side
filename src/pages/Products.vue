@@ -3,33 +3,28 @@ import { onMounted, ref, reactive } from 'vue';
 import { Plus, Pencil, Trash2, X } from 'lucide-vue-next';
 import api from '@/lib/api';
 
-// State
 const medicines = ref([]);
 const showModal = ref(false);
 const editingId = ref(null);
 const isEditingForm = ref(false);
 const saving = ref(false);
+const loading = ref(true);
 
-const loading=ref(true);
-
-onMounted(async()=>{
-    await fetchMedicines();
-    loading.value = false;
+onMounted(async () => {
+  await fetchMedicines();
 });
 
-async function fetchMedicines(){
-    loading.value=true;
-    try{
-        const {data}=await api.get('/medicines');
-        medicines.value=data;
-
-    }catch(error){
-        console.error('Error fetching medicines', error);
-    }finally{
-        loading.value = false;
-    }
+async function fetchMedicines() {
+  loading.value = true;
+  try {
+    const { data } = await api.get('/medicines');
+    medicines.value = data;
+  } catch (error) {
+    console.error('Error fetching medicines', error);
+  } finally {
+    loading.value = false;
+  }
 }
-
 
 const categories = [
   'Tablets', 
@@ -64,6 +59,11 @@ function resetForm() {
   form.expiryDate = '';
 }
 
+function formatDateForInput(dateString) {
+  if (!dateString) return '';
+  return dateString.split('T')[0];
+}
+
 function addNewMedicine() {
   resetForm();
   editingId.value = null;
@@ -72,28 +72,28 @@ function addNewMedicine() {
 }
 
 function editMedicine(medicine) {
-  form.name = medicine.name;
-  form.genericName = medicine.genericName;
-  form.category = medicine.category;
-  form.stockQuantity = medicine.stockQuantity;
-  form.strength = medicine.strength;
-  form.dosage = medicine.dosage;
-  form.packSize = medicine.packSize;
-  form.unitPrice = medicine.unitPrice;
-  form.expiryDate = medicine.expiryDate;
+  form.name = medicine.name || '';
+  form.genericName = medicine.genericName || '';
+  form.category = medicine.category || '';
+  form.stockQuantity = medicine.stockQuantity || '';
+  form.strength = medicine.strength || '';
+  form.dosage = medicine.dosage || '';
+  form.packSize = medicine.packSize || '';
+  form.unitPrice = medicine.unitPrice || '';
+  form.expiryDate = formatDateForInput(medicine.expiryDate);
   
   editingId.value = medicine.id;
   isEditingForm.value = true;
   showModal.value = true;
 }
-//edited delete function to include confirmation and error handling
- async function deleteMedicine(med) {
+
+async function deleteMedicine(med) {
   if (!confirm(`Delete ${med.name}? This action cannot be undone.`)) return;
   try {
     await api.delete(`/medicines/${med.id}`);
     medicines.value = medicines.value.filter(m => m.id !== med.id);
-  }catch(error){
-    console.error('Error deleting medicine',error);
+  } catch (error) {
+    console.error('Error deleting medicine', error);
     alert('Failed to delete medicine.');
   }
 }
@@ -103,12 +103,12 @@ function closeModal() {
   resetForm();
 }
 
- async function saveMedicine() {
-  if (!form.name || !form.stockQuantity || !form.unitPrice) {
+async function saveMedicine() {
+  if (!form.name || form.stockQuantity === '' || form.unitPrice === '') {
     alert('Please fill in required fields: Name, Stock Quantity, and Unit Price.');
     return;
   }
-// mapping form data to payload for API submission
+
   const payload = {
     name: form.name,
     genericName: form.genericName,
@@ -118,33 +118,29 @@ function closeModal() {
     dosage: form.dosage,
     packSize: form.packSize,
     unitPrice: Number(form.unitPrice),
-    expiryDate: form.expiryDate,
+    expiryDate: form.expiryDate || null,
   };
-  saving.value=true;
-   try{
-    if(isEditingForm.value){
-        const {data}=await api.put(`/medicines/${editingId.value}`,payload);
-        const index= medicines.value.findIndex(m =>m.id===editingId.value);
-        if(index!==-1){
-            medicines.value[index]=data;
-        }
-    }else{
-        const {data}= await api.post('/medicines', payload);
-        medicines.value.unshift(data);
+
+  saving.value = true;
+  try {
+    if (isEditingForm.value) {
+      const { data } = await api.put(`/medicines/${editingId.value}`, payload);
+      const index = medicines.value.findIndex(m => m.id === editingId.value);
+      if (index !== -1) {
+        medicines.value[index] = data;
+      }
+    } else {
+      const { data } = await api.post('/medicines', payload);
+      medicines.value.unshift(data);
     }
-    showModal.value=false;
-   }catch(error){
+    closeModal();
+  } catch (error) {
     console.error('Error saving medicine', error);
     alert('Failed to save medicine. Please try again.');
-
-   }finally{
-    saving.value=false;
-   }
-
-  closeModal();
+  } finally {
+    saving.value = false;
+  }
 }
-
-
 </script>
 
 <template>
@@ -172,7 +168,7 @@ function closeModal() {
               <th class="px-4 py-3">Category</th>
               <th class="px-4 py-3">Stock</th>
               <th class="px-4 py-3">Strength</th>
-              <th class="px-4 py-3">Dosage </th>
+              <th class="px-4 py-3">Dosage</th>
               <th class="px-4 py-3">Pack Size</th>
               <th class="px-4 py-3">Unit Price</th>
               <th class="px-4 py-3">Expiry Date</th>
@@ -209,10 +205,10 @@ function closeModal() {
                 </span>
               </td>
               <td class="px-4 py-3">{{ med.strength }}</td>
-              <td class="px-4 py-3">{{ med.dosage  }}</td>
-              <td class="px-4 py-3">{{ med.packSize  }}</td>
+              <td class="px-4 py-3">{{ med.dosage }}</td>
+              <td class="px-4 py-3">{{ med.packSize }}</td>
               <td class="px-4 py-3 font-semibold text-gray-800">shs {{ Number(med.unitPrice).toFixed(2) }}</td>
-              <td class="px-4 py-3 text-xs">{{ med.expiryDate }}</td>
+              <td class="px-4 py-3 text-xs">{{ formatDateForInput(med.expiryDate) }}</td>
               <td class="px-4 py-3 text-right space-x-1">
                 <button @click="editMedicine(med)" class="p-1.5 text-green-500 hover:text-green-600 rounded">
                   <Pencil class="w-4 h-4" />
@@ -230,7 +226,6 @@ function closeModal() {
     <!-- Registration / Editing Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <!-- Modal Header -->
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
           <h2 class="text-xl font-bold text-gray-800">
             {{ isEditingForm ? 'Edit Medicine Details' : 'Register New Medicine' }}
@@ -240,7 +235,6 @@ function closeModal() {
           </button>
         </div>
 
-        <!-- Form Body -->
         <form @submit.prevent="saveMedicine" class="p-6 space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -292,13 +286,12 @@ function closeModal() {
             <input v-model="form.dosage" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. Take 1 tablet twice daily after meals" />
           </div>
 
-          <!-- Modal Actions -->
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
               Cancel
             </button>
-            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 font-medium">
-              {{ isEditingForm ? 'Update Medicine' : 'Register Medicine' }}
+            <button type="submit" :disabled="saving" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 font-medium disabled:opacity-50">
+              {{ saving ? 'Saving...' : (isEditingForm ? 'Update Medicine' : 'Register Medicine') }}
             </button>
           </div>
         </form>
