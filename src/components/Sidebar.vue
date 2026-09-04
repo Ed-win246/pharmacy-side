@@ -15,7 +15,6 @@ try {
 const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
     { name: 'Products', icon: Package, route: '/products' },
-    { name: 'Orders', icon: ShoppingCart, route: '/orders' },
     { name: 'Reports', icon: FileText, route: '/reports' },
     { name: 'Settings', icon: Settings, route: '/settings' },
 ];
