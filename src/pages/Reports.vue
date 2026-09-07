@@ -56,8 +56,12 @@ const expiringSooncount=computed(()=>{
 <template >
     <div class="p-6 max-w-7xl mx-auto space-y-6">
         <div>
-            <h1 class="font-bold text-2xl text-gray-800">Reports & Analytics</h1>
-            <p class="text-muted-foreground">A summary of all your Inventory</p>
+            <h1 class="font-bold text-2xl text-gray-800">Analytics</h1>
+            <p class="text-muted-foreground">Monitor Live Inventory and Expiration</p>
         </div>
+        <div v-if="loading" class="p-4 text-center border border-gray-200 bg-white rounded-xl text-gray-200">
+            Loading metrics......
+        </div>
+        
     </div>
 </template> 
