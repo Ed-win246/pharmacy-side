@@ -3,6 +3,8 @@ import LoginPage from "@/pages/LoginPage.vue";
 import Dashboard from '@/pages/Dashboard.vue';
 import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import Products from '@/pages/Products.vue';
+import Categories from "@/pages/Categories.vue";
+import Units from "@/pages/Units.vue";
 import Reports from '@/pages/Reports.vue';
 import Settings from '@/pages/Settings.vue';
 
@@ -19,6 +21,8 @@ const routes = [
         children: [
             { path: 'dashboard', name: 'dashboard', component: Dashboard },
             { path: 'products', name: 'products', component: Products },
+            { path: 'categories', name: 'categories', component: Categories },
+            { path: 'units', name: 'units', component: Units },
             { path: 'reports', name: 'reports', component: Reports },
             { path: 'settings', name: 'settings', component: Settings }
         ],

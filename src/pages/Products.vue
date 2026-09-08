@@ -108,19 +108,19 @@ function closeModal() {
 }
 
 async function saveMedicine() {
-  if (!form.name || form.stockQuantity === '' || form.unitPrice === '') {
-    alert('Please fill in required fields: Name, Stock Quantity, and Unit Price.');
+  if (!form.name ) {
+    alert('Please fill in required fields: Name');
     return;
   }
 
   const payload = {
     name: form.name,
-    genericName: form.genericName,
-    category: form.category,
+    genericName: form.genericName || null,
+    category: form.category || null,
     stockQuantity: Number(form.stockQuantity),
-    strength: form.strength,
-    dosage: form.dosage,
-    packSize: form.packSize,
+    strength: form.strength || null,
+    dosage: form.dosage || null,
+    packSize: form.packSize || null,
     unitPrice: Number(form.unitPrice),
     expiryDate: form.expiryDate || null,
   };
@@ -150,76 +150,55 @@ async function saveMedicine() {
 </script>
 
 <template>
-  <div class="p-6 max-w-7xl mx-auto space-y-6">
+  <div class="h-full max-w-7xl mx-auto flex flex-col space-y-6 overflow-hidden">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-2xl font-bold text-gray-800">Products Inventory</h1>
+        <h1 class="text-1xl font-medium text-gray-500 uppercase tracking-wide">Products </h1>
         <p class="text-sm text-gray-500">Manage medicines and track stock levels</p>
       </div>
       <button 
         @click="addNewMedicine"
-        class="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 font-medium transition"
+        class="flex items-center gap-2 bg-green-600 text-white px-2 py-2  hover:bg-green-700 font-medium transition"
       >
-        <Plus class="w-4 h-4" /> Add New Medicine
+        <Plus class="w-4 h-4" /> New Product
       </button>
     </div>
-
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-gray-600 text-left">
-          <thead class="bg-gray-50 text-gray-700 font-semibold border-b border-gray-200">
+    <div class="min-h-0 flex-1  border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div class="h-full overflow-auto">
+        <table class="w-full min-w-[620px] text-sm text-left text-gray-600 divide-y divide-slate-100">
+          <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 text-xs  tracking-wide text-gray-500">
             <tr>
-              <th class="px-4 py-3">Medicine Name</th>
-              <th class="px-4 py-3">Generic Name</th>
-              <th class="px-4 py-3">Category</th>
-              <th class="px-4 py-3">Stock</th>
-              <th class="px-4 py-3">Strength</th>
-              <th class="px-4 py-3">Dosage</th>
-              <th class="px-4 py-3">Pack Size</th>
-              <th class="px-4 py-3">Unit Price</th>
-              <th class="px-4 py-3">Expiry Date</th>
-              <th class="px-4 py-3 text-right">Actions</th>
+              <th class="px-6 py-4 font-semibold">Medicine Name</th>
+              <th class="px-6 py-4 font-semibold">Generic Name</th>
+              <th class="px-6 py-4 font-semibold">Category</th>
+              <th class="px-6 py-4 text-right font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody class="divide-y divide-gray-100">
             <tr v-if="loading">
-              <td class="text-center py-8 text-gray-500" colspan="10">
+              <td class="px-5 py-12 text-center text-gray-500" colspan="4">
                 Loading medicines...
               </td>
             </tr>
             <tr v-else-if="medicines.length === 0">
-              <td class="text-center py-8 text-gray-500" colspan="10">
+              <td class="px-5 py-12 text-center text-gray-500" colspan="4">
                 No medicines available. Click "Add New Medicine" to create one.
               </td>
             </tr>
-
-            <tr v-for="med in medicines" :key="med.id" class="hover:bg-gray-50 transition">
-              <td class="px-4 py-3 font-semibold text-gray-900">{{ med.name }}</td>
-              <td class="px-4 py-3 text-gray-500">{{ med.genericName }}</td>
-              <td class="px-4 py-3">
-                <span v-if="med.category" class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs">
+            <tr v-for="med in medicines" :key="med.id" class="transition-colors hover:bg-green-50/40">
+              <td class="px-5 py-4 font-semibold text-gray-900">{{ med.name }}</td>
+              <td class="px-5 py-4 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
+              <td class="px-5 py-4">
+                <span v-if="med.category" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                   {{ med.category }}
                 </span>
-                <span v-else>—</span>
+                <span v-else class="text-gray-400">Not provided</span>
               </td>
-              <td class="px-4 py-3">
-                <span :class="[
-                  'px-2 py-0.5 rounded-full text-xs font-semibold',
-                  med.stockQuantity < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                ]">
-                  {{ med.stockQuantity }} units
-                </span>
-              </td>
-              <td class="px-4 py-3">{{ med.strength }}</td>
-              <td class="px-4 py-3">{{ med.dosage }}</td>
-              <td class="px-4 py-3">{{ med.packSize }}</td>
-              <td class="px-4 py-3 font-semibold text-gray-800">shs {{ Number(med.unitPrice).toFixed(2) }}</td>
-              <td class="px-4 py-3 text-xs">{{ formatDateForInput(med.expiryDate) }}</td>
-              <td class="px-4 py-3 text-right space-x-1">
-                <button @click="editMedicine(med)" class="p-1.5 text-green-500 hover:text-green-600 rounded">
+              <td class="px-5 py-4 text-right">
+                <button @click="editMedicine(med)" :aria-label="`Edit ${med.name}`" class="mr-1 inline-flex rounded-lg p-2 text-green-400 transition hover:bg-green-100 hover:text-green-700">
                   <Pencil class="w-4 h-4" />
                 </button>
-                <button @click="deleteMedicine(med)" class="p-1.5 text-red-500 hover:text-red-600 rounded">
+                <button @click="deleteMedicine(med)" :aria-label="`Delete ${med.name}`" class="inline-flex rounded-lg p-2 text-red-400 transition hover:bg-red-100 hover:text-red-600">
                   <Trash2 class="w-4 h-4" />
                 </button>
               </td>
@@ -233,8 +212,8 @@ async function saveMedicine() {
     <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 class="text-xl font-bold text-gray-800">
-            {{ isEditingForm ? 'Edit Medicine Details' : 'Register New Medicine' }}
+          <h2 class="text-xl font-meduim text-gray-800">
+            {{ isEditingForm ? 'Edit Medicine Details' : 'New Product' }}
           </h2>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
             <X class="w-5 h-5" />
@@ -260,44 +239,13 @@ async function saveMedicine() {
                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
               </select>
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Strength</label>
-              <input v-model="form.strength" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. 500mg" />
             </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Stock Quantity *</label>
-              <input v-model="form.stockQuantity" type="number" min="0" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="0" />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Unit Price ($) *</label>
-              <input v-model="form.unitPrice" type="number" step="0.01" min="0" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="0.00" />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Pack Size</label>
-              <input v-model="form.packSize" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. 10x10 Blister Pack" />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Expiry Date</label>
-              <input v-model="form.expiryDate" type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Dosage Administration / Instructions</label>
-            <input v-model="form.dosage" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. Take 1 tablet twice daily after meals" />
-          </div>
-
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50">
               Cancel
             </button>
-            <button type="submit" :disabled="saving" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 font-medium disabled:opacity-50">
-              {{ saving ? 'Saving...' : (isEditingForm ? 'Update Medicine' : 'Register Medicine') }}
+            <button type="submit" :disabled="saving" class="px-4 py-2 bg-green-600 text-white  text-sm hover:bg-green-700 font-medium disabled:opacity-50">
+              {{ saving ? 'Saving...' : (isEditingForm ? 'Update Medicine' : 'Submit') }}
             </button>
           </div>
         </form>
