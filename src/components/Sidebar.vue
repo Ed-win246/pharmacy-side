@@ -44,7 +44,7 @@ function logout() {
         <div class="p-6 border-b border-gray-200">
             <h1 class="text-2xl font-bold text-green-600">Pharmacy Portal</h1>
         </div>
-        <nav class="flex-1 p-4 space-y-1">
+        <nav class="flex-1 p-6 space-y-2">
             <router-link
                 v-for="item in menuItem"
                 :key="item.name"
