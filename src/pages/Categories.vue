@@ -160,12 +160,12 @@ async function saveCategory(){
     <div class="h-full max-w-7xl mx-auto flex flex-col space-y-6 overflow-hidden">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-medium tracking-wide text-gray-800">Product Categories</h2>
+                <h2 class="text-xl font-medium tracking-wide text-gray-700 uppercase">Product Categories</h2>
                 <p class="text-sm text-gray-500">Manage the categories used for your products</p>
             </div>
             <button
                 @click="addNewCategory"
-                class="flex items-center gap-2  bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 cursor-pointer"
+                class="flex items-center gap-2  bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 cursor-pointer rounded-sm"
             >
                 <Plus class="h-4 w-4" />
                 New Category
@@ -192,7 +192,7 @@ async function saveCategory(){
         <div class="min-h-0 flex-1 bg-white shahow-sm overflow-hidden">
             <div class="h-full overflow-auto">
                 <table class="w-[90%] min-w-[620px] text-sm text-left text-black divide-y divide-slate-100">
-                    <thead class="sticky top-0 z-10 border-b bd-white text-xs tracking-wide text-black">
+                    <thead class="sticky top-0 z-10 border-b bg-white text-xs tracking-wide text-black">
                         <tr>
                             <th class="px-4 py-4 font-medium">#</th>
                             <th class="px-4 py-4 font-medium ">Name</th>
@@ -239,7 +239,7 @@ async function saveCategory(){
                     <h2 class="text-xl font-medium text-gray-800">
                         {{ isEditingForm? 'Edit Product Category': 'New Product Category' }}
                     </h2>
-                    <button @click="closeModal" class="text=gray-400 hover:text-gray-600" >
+                    <button @click="closeModal" class="text-gray-400 hover:text-gray-600" >
                         <X class="w-4 h-4"/>
                     </button>
                 </div>
@@ -264,7 +264,7 @@ async function saveCategory(){
         </div>
         <!--delete modal-->
         <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center p-4 z-50 justify-center">
-            <div class="shodow-xl rounded-xl max-w-2xl w-full bg-white ">
+            <div class="shadow-xl rounded-xl max-w-2xl w-full bg-white ">
                 <div class="p-6">
                     <h2 class="text-lg font-semibold text-gray-800">Delete Product Category</h2>
                     <p class="mt-2 text-sm text-gray-500">
@@ -272,7 +272,7 @@ async function saveCategory(){
                     </p>
                 </div>
                 <div class="flex justify-end gap-3 p-4 border-t border-gray-300">
-                    <button @click="cancelDelete" class="cursor-pointer px-4 py-2 border border-gray-300text-gray-400 text-sm rounded-sm bg-gray-500">
+                    <button @click="cancelDelete" class="cursor-pointer px-4 py-2 border border-gray-300 text-gray-400 text-sm rounded-sm bg-gray-500">
                         Cancel
                     </button>
                     <button @click="deleteCategory" :disabled="deleting" class="cursor-pointer px-4 py-2 bg-red-500 text-white rounded-sm text-sm font-medium flex items-center gap-2 ">
