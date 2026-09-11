@@ -7,12 +7,18 @@ import Categories from "@/pages/Categories.vue";
 import Units from "@/pages/Units.vue";
 import Reports from '@/pages/Reports.vue';
 import Settings from '@/pages/Settings.vue';
+import Register from '@/pages/Register.vue';
 
 const routes = [
     { 
         path: '/login', 
         name: 'login', 
         component: LoginPage 
+    },
+    { 
+        path: '/register', 
+        name: 'register', 
+        component: Register 
     },
     {
         path: '/',
