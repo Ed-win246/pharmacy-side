@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
-import { Pencil, Plus, Trash2, X, SquarePenIcon } from 'lucide-vue-next';
+import { onMounted, reactive, ref , computed } from 'vue';
+import { Plus, Trash2, X, SquarePenIcon, CircleCheckIcon , Search} from 'lucide-vue-next';
 import toast from '@tsirosgeorge/toastnotification';
 import api from '@/lib/api';
+
 
 const categories = ref([]);
 const loading = ref(true);
@@ -14,6 +15,18 @@ const categoryToDelete=ref(null);
 const showDeleteModal=ref(false);
 const deleting=ref(false);
 const loggedUser = ref(null);
+const searchQuery=ref('');
+
+//search function
+const filterCategories=computed(()=>{
+    if(!searchQuery.value.trim()){
+        return categories.value;
+    }
+    const query= searchQuery.value.trim().toLowerCase();
+    return categories.value.filter(cat=>
+        String(cat.Category_name || '').toLowerCase().includes(query)
+    );
+});
 
 try {
     loggedUser.value = JSON.parse(localStorage.getItem('user') || 'null');
@@ -85,6 +98,7 @@ async function deleteCategory(){
         categories.value= categories.value.filter(c =>c.id !==categoryToDelete.value.id);
         showDeleteModal.value=false;
         categoryToDelete.value=null;
+        toast.success('Product category deleted successfully');
     }catch(error){
         console.error('Error deleting category.', error);
         toast.error('Category couldnot be deleted.');
@@ -141,10 +155,7 @@ async function saveCategory(){
         saving.value=false;
     }
 }
-
-
 </script>
-
 <template>
     <div class="h-full max-w-7xl mx-auto flex flex-col space-y-6 overflow-hidden">
         <div class="flex items-center justify-between">
@@ -160,7 +171,24 @@ async function saveCategory(){
                 New Category
             </button>
         </div>
-
+        <div class="relative max-w-sm pl-2 ">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search product category..."
+                class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-sm focus:ring-2 focus:ring-green-500 outline-none"
+            />
+            <button
+                v-if="searchQuery"
+                @click="searchQuery = ''"
+                type="button"
+                aria-label="Clear search"
+                class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+            >
+                <X class="h-4 w-4" />
+            </button>
+        </div>
         <div class="min-h-0 flex-1 bg-white shahow-sm overflow-hidden">
             <div class="h-full overflow-auto">
                 <table class="w-[90%] min-w-[620px] text-sm text-left text-black divide-y divide-slate-100">
@@ -176,26 +204,28 @@ async function saveCategory(){
                     <tbody class="divide-y divide-gray-100">
                         <tr v-if="loading">
                             <td class="py-12 px-6 text-center text-gray-500" colspan="5">
-                                No Data Found...
+                                No Product Category Data Found...
                             </td>
                         </tr>
-                        <tr v-else-if="categories.length===0">
+                        <tr v-else-if="filterCategories.length===0">
                             <td class="px-6 py-12 text-center text-gray-500" colspan="5">
-                                No Product Categories added Yet. Click " New Category " to create one.
+                               {{ searchQuery ? 'No product category matches your search':'No product categorry found' }}
                             </td>
                         </tr>
-                        <tr v-for="(cat,index) in categories" :key="cat.id">
-                            <td class="px-4 py-4 font-medium ">{{ index + 1 }}</td>
-                            <td class="px-4 py-4 font medium">{{ cat.Category_name }}</td>
-                            <td class="px-4 py-4 text-gray-600">{{ getAddedBy(cat) }}</td>
-                            <td class="px-4 py-4 text-gray-600">{{ formatDateOnly(cat.createdAt || cat.created_at || cat.addedDate) }}</td>
-                            <td class="px-4 py-4 text-gray-600">
-                                <button @click="editCategory(cat)" class="text-green-600 cursor-pointer pr-2">
+                        <tr v-for="(cat,index) in filterCategories" :key="cat.id">
+                            <td class="px-2 py-2 font-medium ">{{ index + 1 }}</td>
+                            <td class="px-2 py-2 font medium">{{ cat.Category_name }}</td>
+                            <td class="px-4 py-2 text-gray-600">{{ getAddedBy(cat) }}</td>
+                            <td class="px-2 py-2 text-gray-600">{{ formatDateOnly(cat.createdAt || cat.created_at || cat.addedDate) }}</td>
+                            <td class="px-5 py-2 text-gray-600">
+                                <div class="flex items-center">
+                                <button @click="editCategory(cat)" aria-label="Edit category" class="flex h-7 w-7 items-center justify-center rounded-l-sm bg-green-600 text-white cursor-pointer hover:bg-green-700">
                                     <SquarePenIcon class="w-4 h-4"/>
                                 </button>
-                                <button @click="confirmDelete(cat)"class="text-red-600 cursor-pointer" >
+                                <button @click="confirmDelete(cat)" aria-label="Delete category" class="flex h-7 w-7 items-center justify-center rounded-r-sm bg-red-600 text-white cursor-pointer hover:bg-red-700" >
                                     <Trash2 class="w-4 h-4"/>
                                 </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -221,11 +251,11 @@ async function saveCategory(){
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50">
+                        <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50 ">
                             Cancel
                         </button>
-                        <button type="submit" :disabled="saving" class="px-4 py-2 bg-green-600 text-white text-sm font-medium disabled:opacity-50 rounded-sm">
-                            {{ saving ? 'Saving...' : (isEditingForm ? 'Submit' : 'Submit')}}
+                        <button type="submit" :disabled="saving" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium disabled:opacity-50 rounded-sm ">
+                            <CircleCheckIcon class="w-4 h-4"/>  {{ saving ? 'Saving...' : (isEditingForm ? 'Submit' : 'Submit')}}
 
                         </button>
                     </div>
@@ -242,11 +272,11 @@ async function saveCategory(){
                     </p>
                 </div>
                 <div class="flex justify-end gap-3 p-4 border-t border-gray-300">
-                    <button @click="cancelDelete" class="cursor-pointer px-4 py-2 border border-gray-300text-gray-700 text-sm rounded-sm bg-gray-500">
+                    <button @click="cancelDelete" class="cursor-pointer px-4 py-2 border border-gray-300text-gray-400 text-sm rounded-sm bg-gray-500">
                         Cancel
                     </button>
-                    <button @click="deleteCategory" :disabled="deleting" class="cursor-pointer px-4 py-2 bg-red-600 text-white rounded-sm text-sm font-medium ">
-                        {{ deleting? 'Deleting...' : 'Submit' }}
+                    <button @click="deleteCategory" :disabled="deleting" class="cursor-pointer px-4 py-2 bg-red-500 text-white rounded-sm text-sm font-medium flex items-center gap-2 ">
+                      <CircleCheckIcon class="w-4 h-4"/>  {{ deleting? 'Deleting...' : 'Yes' }}
                     </button>
                 </div>
             </div>
