@@ -1,6 +1,6 @@
 <script setup>
-import { onMounted, ref, reactive } from 'vue';
-import { Plus, Pencil, Trash2, X } from 'lucide-vue-next';
+import { onMounted, ref, reactive , computed } from 'vue';
+import { Plus, Pencil,SquarePenIcon ,Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 
@@ -14,6 +14,7 @@ const showDeleteModal = ref(false);
 const medicineToDelete = ref(null);
 const deleting = ref(false);
 const categories = ref([]);
+const searchQuery=ref('');
 
 onMounted(async () => {
   await Promise.all([fetchMedicines(), fetchCategories()]);
@@ -146,6 +147,18 @@ async function deleteMedicine() {
     deleting.value = false;
   }
 }
+//searching for products function
+const filterMedicines=computed(()=>{
+  if(!searchQuery.value.trim()){
+    return medicines.value;
+  }
+  const query=searchQuery.value.toLowerCase();
+  return medicines.value.filter(med =>
+    [med.name, med.genericName, med.category]
+      .filter(Boolean)
+      .some(value => value.toLowerCase().includes(query))
+  );
+});
 </script>
 
 <template>
@@ -162,12 +175,31 @@ async function deleteMedicine() {
         <Plus class="w-4 h-4" /> New Product
       </button>
     </div>
-    <div class="min-h-0 flex-1 bg-white shadow-sm ">
+    <!-- Search products -->
+    <div class="relative max-w-sm pl-2">
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Search Product..."
+        class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-sm focus:ring-2 focus:ring-green-500 outline-none"
+      />
+      <button
+        v-if="searchQuery"
+        @click="searchQuery = ''"
+        type="button"
+        aria-label="Clear search"
+        class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+      >
+        <X class="h-4 w-4" />
+      </button>
+    </div>
+    <div class="min-h-0 flex-1 bg-white  ">
       <div class="h-full overflow-auto">
-        <table class="w-full min-w-[620px] text-sm text-left text-gray-600 divide-y divide-slate-100">
-          <thead class="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 text-xs  tracking-wide text-gray-500">
+        <table class="w-[90%] min-w-[620px] text-sm text-left text-gray-600 divide-y ">
+          <thead class="sticky top-0 z-10 border-b border-gray-200  text-xs  tracking-wide text-gray-500">
             <tr>
-              <th class="px-4 py-4 font-meduim">#</th>
+              <th class="px-2 py-4 font-meduim">#</th>
               <th class="px-4 py-4 font-semibold">Medicine Name</th>
               <th class="px-4 py-4 font-semibold">Generic Name</th>
               <th class="px-4 py-4 font-semibold">Category</th>
@@ -176,32 +208,34 @@ async function deleteMedicine() {
           </thead>
           <tbody class="divide-y divide-gray-100">
             <tr v-if="loading">
-              <td class="px-5 py-12 text-center text-gray-500" colspan="4">
+              <td class="px-5 py-12 text-center text-gray-500" colspan="5">
                 Loading Products...
               </td>
             </tr>
-            <tr v-else-if="medicines.length === 0">
-              <td class="px-5 py-12 text-center text-gray-500" colspan="4">
-                No medicines available. Click "Add New Medicine" to create one.
+            <tr v-else-if="filterMedicines.length === 0">
+              <td class="px-5 py-12 text-center text-gray-500" colspan="5">
+                {{ searchQuery ? 'No products match your search':'No products available' }}
               </td>
             </tr>
-            <tr v-for="(med,index) in medicines" :key="med.id" class="transition-colors hover:bg-green-50/40">
-              <td class="px-4 py-4 font-medium">{{ index + 1 }}</td>
-              <td class="px-4 py-4 font-semibold text-gray-900">{{ med.name }}</td>
-              <td class="px-4 py-4 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
-              <td class="px-4 py-4">
+            <tr v-for="(med,index) in filterMedicines" :key="med.id" class="transition-colors hover:bg-green-50/40">
+              <td class="px-2 py-2 font-medium">{{ index + 1 }}</td>
+              <td class="px-2 py-2 font-semibold text-gray-900">{{ med.name }}</td>
+              <td class="px-2 py-2 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
+              <td class="px-2 py-2">
                 <span v-if="med.category" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                   {{ med.category }}
                 </span>
                 <span v-else class="text-gray-400">Not provided</span>
               </td>
-              <td class="px-5 py-4 ">
-                <button @click="editMedicine(med)" :aria-label="`Edit ${med.name}`" class="mr-1 inline-flex rounded-sm p-2 text-green-400 transition hover:bg-green-100 hover:text-green-700 cursor">
-                  <Pencil class="w-4 h-4" />
+              <td class="px-5 py-2">
+                <div class="flex items-center gap-0">
+                <button @click="editMedicine(med)" :aria-label="`Edit ${med.name}`" class="flex h-7 w-7 items-center justify-center rounded-l-sm rounded-r-none bg-green-500 text-white transition hover:bg-green-100 hover:text-green-700 cursor-pointer">
+                  <SquarePenIcon class="w-4 h-4" />
                 </button>
-                <button @click="confirmDelete(med)" :aria-label="`Delete ${med.name}`" class="inline-flex rounded-sm p-2 text-red-400 transition hover:bg-red-100 hover:text-red-600 cursor">
+                <button @click="confirmDelete(med)" :aria-label="`Delete ${med.name}`" class="flex h-7 w-7 items-center justify-center rounded-l-none rounded-r-sm bg-red-500 text-white transition hover:bg-red-100 hover:text-red-600 cursor-pointer">
                   <Trash2 class="w-4 h-4" />
                 </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -266,8 +300,8 @@ async function deleteMedicine() {
             <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50">
               Cancel
             </button>
-            <button type="submit" :disabled="saving" class="px-4 py-2 bg-green-600 text-white  text-sm hover:bg-green-700 font-medium disabled:opacity-50 rounded-sm">
-              {{ saving ? 'Saving...' : (isEditingForm ? 'Submit' : 'Submit') }}
+            <button type="submit" :disabled="saving" class="flex items-center px-4 py-2 gap-2 bg-green-600 text-white  text-sm hover:bg-green-700 font-medium disabled:opacity-50 rounded-sm">
+             <CircleCheckIcon class="w-4 h-4 "/> {{ saving ? 'Saving...' : (isEditingForm ? 'Submit' : 'Yes') }}
             </button>
           </div>
         </form>
