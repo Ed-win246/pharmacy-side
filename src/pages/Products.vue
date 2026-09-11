@@ -13,9 +13,10 @@ const loading = ref(true);
 const showDeleteModal = ref(false);
 const medicineToDelete = ref(null);
 const deleting = ref(false);
+const categories = ref([]);
 
 onMounted(async () => {
-  await fetchMedicines();
+  await Promise.all([fetchMedicines(), fetchCategories()]);
 });
 
 async function fetchMedicines() {
@@ -31,37 +32,27 @@ async function fetchMedicines() {
   }
 }
 
-const categories = [
-  'Tablets', 
-  'Capsules', 
-  'Syrups', 
-  'Injections', 
-  'Ointments/Creams', 
-  'Supplements'
-];
+async function fetchCategories() {
+  loading.value=true;
+  try {
+    const { data } = await api.get('/categories');
+    categories.value = data;
+  } catch (error) {
+    console.error('Error fetching categories', error);
+    toast.error('Failed to fetch categories. Please try again later.');
+  }
+}
 
 const form = reactive({
   name: '',
   genericName: '',
   category: '',
-  stockQuantity: '',
-  strength: '',
-  dosage: '',
-  packSize: '',
-  unitPrice: '',
-  expiryDate: '',
 });
 
 function resetForm() {
   form.name = '';
   form.genericName = '';
   form.category = '';
-  form.stockQuantity = '';
-  form.strength = '';
-  form.dosage = '';
-  form.packSize = '';
-  form.unitPrice = '';
-  form.expiryDate = '';
 }
 
 function formatDateForInput(dateString) {
@@ -80,12 +71,6 @@ function editMedicine(medicine) {
   form.name = medicine.name || '';
   form.genericName = medicine.genericName || '';
   form.category = medicine.category || '';
-  form.stockQuantity = medicine.stockQuantity || '';
-  form.strength = medicine.strength || '';
-  form.dosage = medicine.dosage || '';
-  form.packSize = medicine.packSize || '';
-  form.unitPrice = medicine.unitPrice || '';
-  form.expiryDate = formatDateForInput(medicine.expiryDate);
   
   editingId.value = medicine.id;
   isEditingForm.value = true;
@@ -108,12 +93,6 @@ async function saveMedicine() {
     name: form.name,
     genericName: form.genericName || null,
     category: form.category || null,
-    stockQuantity: Number(form.stockQuantity),
-    strength: form.strength || null,
-    dosage: form.dosage || null,
-    packSize: form.packSize || null,
-    unitPrice: Number(form.unitPrice),
-    expiryDate: form.expiryDate || null,
   };
 
   saving.value = true;
@@ -277,7 +256,9 @@ async function deleteMedicine() {
               <label class="block text-xs font-semibold text-gray-700 mb-1">Category</label>
               <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
                 <option value="">Select category...</option>
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
+                  {{ cat.Category_name }}
+                </option>
               </select>
             </div>
             </div>
