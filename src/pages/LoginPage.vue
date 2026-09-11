@@ -1,14 +1,12 @@
-```vue
-<script setup lang="js">
+<script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import {useRoute, useRouter } from 'vue-router';
 import {
   Card,
   CardTitle,
   CardContent,
   CardDescription,
   CardHeader,
-  CardFooter
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-vue-next';
 import logo from '@/assets/pharm.jpg';
 import api from '@/lib/api';
+import toast from '@tsirosgeorge/toastnotification';
 
 const email = ref('');
 const password = ref('');
@@ -24,6 +23,7 @@ const loading = ref(false);
 const showPassword = ref(false);
 
 const router = useRouter();
+const route= useRoute();
 
 async function handleLogin() {
   error.value = null;
@@ -58,6 +58,14 @@ async function handleLogin() {
       alt="Pharmacy Logo"
       class="w-40 h-40 sm:w-32 sm:h-32 md:w-40 md:h-40 mb-4 rounded-full object-cover shadow-md"
     />
+    <div
+      v-if="route.query.registered"
+      class="mb-4 w-full max-w-[380px] rounded-md bg-green-50 border border-green-200 p-3"
+    >
+      <p class="text-sm text-green-700 text-center">
+        Registration submitted! You'll be able to log in once an admin approves your account.
+      </p>
+    </div>
     <Card class="w-full max-w-[380px] shadow-xl">
       <CardHeader>
         <CardTitle class="flex justify-center items-center">
@@ -134,20 +142,22 @@ async function handleLogin() {
           >
             <p class="text-sm text-red-600 text-center mb-2">{{ error }}</p>
           </div>
-                      <Button
+            <Button
               type="submit"
               :disabled="loading"
               class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg mt-4"
             >
               {{ loading ? 'Signing in...' : 'Login' }}
             </Button>
-          <!-- Login Button -->
-          <!-- <CardFooter class="flex flex-col gap-2 px-0 mt-6">
-
-          </CardFooter> -->
+            <p class="text-sm text-center mt-4 text-gray-600">
+              Dont have an account?
+              <router-link to="/register" class="text-blue-600 font-medium hover:underline" >
+                Register Here
+              </router-link>
+            </p>
         </form>
       </CardContent>
     </Card>
   </div>
 </template>
-```
+
