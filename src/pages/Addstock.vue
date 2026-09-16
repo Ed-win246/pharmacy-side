@@ -210,12 +210,11 @@ async function submitStockBatch() {
                     </form>
                 </div>
                 <div>
-                    <!-- Empty Placeholder Div -->
                     <div v-if="stockItems.length === 0" class="border-2 border-gray-300 rounded-lg p-10 text-center bg-gray-100 flex flex-col items-center justify-center min-h-[380px] space-y-3">
                         <div class="p-3 bg-gray-100 rounded-full text-gray-400">
                             <PackageOpen class="w-10 h-10 stroke-1 text-green-800" />
                         </div>
-                        <h3 class="text-base font-medium text-green-700">No item selected</h3>
+                        <h3 class=" font-medium text-green-700 text-xl">No item selected</h3>
                         <p class="text-sm text-gray-500 max-w-xs">
                             Fill out the stock form and submit to preview your added stock items here.
                         </p>
