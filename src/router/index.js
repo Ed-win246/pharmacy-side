@@ -8,7 +8,7 @@ import Units from "@/pages/Units.vue";
 import Reports from '@/pages/Reports.vue';
 import Settings from '@/pages/Settings.vue';
 import Register from '@/pages/Register.vue';
-import { components } from "reka-ui/constant";
+import ViewStock from "@/pages/ViewStock.vue";
 import Addstock from "@/pages/Addstock.vue";
 
 const routes = [
@@ -32,6 +32,7 @@ const routes = [
             { path: 'categories', name: 'categories', component: Categories },
             { path: 'units', name: 'units', component: Units },
             {path: 'addstock', name:'addstock', component: Addstock},
+            {path:'viewstock',name:'viewstock',component: ViewStock},
             { path: 'reports', name: 'reports', component: Reports },
             { path: 'settings', name: 'settings', component: Settings }
         ],
