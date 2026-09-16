@@ -44,7 +44,7 @@ async function fetchUnits(){
         const {data}= await api.get('/units');
         units.value=data;
     }catch(error){
-        console.error('Error fecthing product Units');
+        console.error('Error fecthing product Units',error);
         toast.error('Error fetching product units');
     }finally{
         loading.value=false;
