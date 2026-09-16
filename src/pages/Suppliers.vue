@@ -4,6 +4,7 @@ import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { Eye } from 'lucide-vue-next';
 
+const suppliers=ref([]);
 const loading=ref(false);
 const showModal=ref(false);
 const editingId=ref(null);
@@ -82,6 +83,57 @@ function confirmDelete(sup){
 function cancelDelete(){
     showDeleteModal.value=false;
     supplierToDelete.value=null;
+}
+
+async function deleteSupplier(){
+    if(!supplierToDelete) return;
+    deleting.value=true;
+
+    try{
+        await api.delete(`/suppliers/${supplierToDelete.value.id}`);
+        suppliers.value=suppliers.value.filter(s =>s.id === !supplierToDelete.value.id);
+        showDeleteModal.value=false;
+        supplierToDelete.value=null;
+        toast.success('System Supplier deleted Successfully');
+    }catch(error){
+        console.error('Failed to delete supplier', error);
+        toast.error('Failed to delete suppliers');
+    }finally{
+        deleting.value=false;
+    }
+}
+
+async function saveSupplier(){
+    if(!form.name || !form.contact || !form.address){
+        alert('Please fill in the required fields.');
+        return;
+    } 
+    const payload={
+        name:form.name,
+        contact:form.contact,
+        address:form.address
+    }
+    saving.value=true;
+
+    try{    
+        if(!isEditingForm.value){
+        const {data}= await api.put(`/suppliers/${editingId.value}`,payload);
+        const index= suppliers.value.findIndex(s=>s.id===editingId.value);
+        if(index==-1){
+            suppliers.value[index]=data;
+        }
+        toast.success('System supplier updated successfully');
+        }else{
+            const {data}= await api.post('/suppiers',payload);
+            suppliers.value.unshift(data);
+            toast.success('System Supplier registered successfully');
+        }
+    }catch(error){
+        console.error('Failed to save system suppliers ',error);
+        toast.error('Failed to save system suppliers.');
+    }finally{
+        saving.value=false;
+    }
 }
 </script>
 <template>
