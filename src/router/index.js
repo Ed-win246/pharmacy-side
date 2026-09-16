@@ -10,6 +10,11 @@ import Settings from '@/pages/Settings.vue';
 import Register from '@/pages/Register.vue';
 import ViewStock from "@/pages/ViewStock.vue";
 import Addstock from "@/pages/Addstock.vue";
+import Purchases from "@/pages/Purchases.vue";
+import BatchLevels from "@/pages/BatchLevels.vue";
+import SystemStock from "@/pages/SystemStock.vue";
+import ReconcileStock from "@/pages/ReconcileStock.vue";
+import ExpiredStock from "@/pages/ExpiredStock.vue";
 
 const routes = [
     { 
@@ -33,6 +38,11 @@ const routes = [
             { path: 'units', name: 'units', component: Units },
             {path: 'addstock', name:'addstock', component: Addstock},
             {path:'viewstock',name:'viewstock',component: ViewStock},
+            {path:'purchases',name:'purchases',component:Purchases},
+            {path:'batchlevels',name:'batchlevels',component:BatchLevels},
+            {path:'systemstock',name:'systemstock',component:SystemStock},
+            {path:'reconcilestock',name:'reconcilestock',component:ReconcileStock},
+            {path:'expiredstock',name:'expiredstock',component:ExpiredStock},
             { path: 'reports', name: 'reports', component: Reports },
             { path: 'settings', name: 'settings', component: Settings }
         ],
