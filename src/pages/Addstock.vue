@@ -13,6 +13,7 @@ const medicines = ref([]);
 const categories = ref([]);
 const units = ref([]);
 const stockItems = ref([]);
+const suppliers=ref([]);
 
 const form = reactive({
     category: '',
@@ -36,7 +37,7 @@ const totalAmount = computed(() => {
 });
 
 onMounted(async () => {
-    await Promise.all([fetchMedicines(), fetchCategories(), fetchUnits()]);
+    await Promise.all([fetchMedicines(), fetchCategories(), fetchUnits(), fetchSuppliers()]);
 });
 
 async function fetchMedicines() {
@@ -62,6 +63,19 @@ async function fetchCategories() {
         toast.error('Failed to load categories. Please try again later');
     } finally {
         loading.value = false;
+    }
+}
+
+async function fetchSuppliers(){
+    loading.value=true;
+    try{
+        const {data}= await api.get('/suppliers');
+        suppliers.value=data;
+    }catch(error){
+        console.error('Failed to load system suppliers',error);
+        toast.error('Failed to load system suppliers');
+    }finally{
+        loading.value=false;
     }
 }
 
@@ -294,12 +308,17 @@ async function submitStockBatch() {
                                 </div>
                                 <div>
                                     <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
-                                    <input
+                                    <select
                                         id="supplier"
                                         v-model="payment.supplier"
                                         type="text"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                                    />
+                                    >
+                                        <option value="">Select option..</option>
+                                        <option v-for="supplierOption in suppliers" :key="supplierOption.name" :value="supplierOption.name">
+                                            {{ supplierOption.name }}
+                                        </option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label for="payment_option" class="block text-sm font-medium text-gray-700">Payment Option</label>
@@ -308,11 +327,9 @@ async function submitStockBatch() {
                                         v-model="payment.payment_option"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     >
-                                        <option value="">Select option</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="mobile_money">Mobile Money</option>
-                                        <option value="bank_transfer">Bank Transfer</option>
-                                        <option value="credit">Credit</option>
+                                    <select name="" >select option</select>
+                                    <option value="">Cash</option>
+                                    <option value="">Visa</option>
                                     </select>
                                 </div>
                                 <div>
