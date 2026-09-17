@@ -2,14 +2,14 @@
 import {ref, reactive, onMounted} from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-import { Eye } from 'lucide-vue-next';
+import { CircleCheck,  Plus, SquarePenIcon, Trash2, X } from 'lucide-vue-next';
 
 const suppliers=ref([]);
 const loading=ref(false);
 const showModal=ref(false);
 const editingId=ref(null);
 const isEditingForm=ref(false);
-const supplierToDelete=ref(false);
+const supplierToDelete=ref(null);
 const showDeleteModal=ref(false);
 const deleting=ref(false);
 const saving=ref(false);
@@ -30,7 +30,10 @@ async function fetchSuppliers(){
     loading.value=true;
     try{
         const {data}=await api.get('/suppliers');
-        fetchSuppliers.value=data;
+        suppliers.value=data.map(supplier => ({
+            ...supplier,
+            contact: String(supplier.contact ?? ''),
+        }));
     }
     catch(error){
         console.error('Failed to fetch system suppliers',error);
@@ -60,13 +63,13 @@ function addNewSupplier(){
     editingId.value=null;
 }
 
-function editSupplier(supplier){
-    form.name=supplier.name;
-    form.contact=supplier.contact;
-    form.address=supplier.address;
+function editSupplier(sup){
+    form.name=sup.name;
+    form.contact=String(sup.contact ?? '');
+    form.address=sup.address;
 
     isEditingForm.value=true;
-    editingId.value=supplier.id;
+    editingId.value=sup.id;
     showModal.value=true;
 }
 
@@ -76,7 +79,7 @@ function closeModal(){
 }
 
 function confirmDelete(sup){
-    supplierToDelete.value=sup.id;
+    supplierToDelete.value=sup;
     showDeleteModal.value=true;
 }
 
@@ -86,12 +89,12 @@ function cancelDelete(){
 }
 
 async function deleteSupplier(){
-    if(!supplierToDelete) return;
+    if(!supplierToDelete.value) return;
     deleting.value=true;
 
     try{
         await api.delete(`/suppliers/${supplierToDelete.value.id}`);
-        suppliers.value=suppliers.value.filter(s =>s.id === !supplierToDelete.value.id);
+        suppliers.value=suppliers.value.filter(s => s.id !== supplierToDelete.value.id);
         showDeleteModal.value=false;
         supplierToDelete.value=null;
         toast.success('System Supplier deleted Successfully');
@@ -110,24 +113,25 @@ async function saveSupplier(){
     } 
     const payload={
         name:form.name,
-        contact:form.contact,
+        contact:String(form.contact),
         address:form.address
     }
     saving.value=true;
 
     try{    
-        if(!isEditingForm.value){
-        const {data}= await api.put(`/suppliers/${editingId.value}`,payload);
-        const index= suppliers.value.findIndex(s=>s.id===editingId.value);
-        if(index==-1){
-            suppliers.value[index]=data;
-        }
-        toast.success('System supplier updated successfully');
+        if(isEditingForm.value){
+            const {data}= await api.put(`/suppliers/${editingId.value}`,payload);
+            const index= suppliers.value.findIndex(s=>s.id===editingId.value);
+            if(index!==-1){
+                suppliers.value[index]=data;
+            }
+            toast.success('System supplier updated successfully');
         }else{
-            const {data}= await api.post('/suppiers',payload);
+            const {data}= await api.post('/suppliers',payload);
             suppliers.value.unshift(data);
             toast.success('System Supplier registered successfully');
         }
+        closeModal();
     }catch(error){
         console.error('Failed to save system suppliers ',error);
         toast.error('Failed to save system suppliers.');
@@ -147,6 +151,112 @@ async function saveSupplier(){
                         <router-link to="/dashboard" class="cursor-pointer text-black">Dashboard</router-link>
                         <span class="text-gray-400">/ Suppliers</span>
                     </div>
+            </div>
+            <div class="min-h-0 overflow-hidden flex-1">
+                <div class="h-full w-full overflow-auto">
+                    <div class="flex justify-end">
+                        <button
+                            @click="addNewSupplier"
+                            class="mt-2 flex shrink-0 items-center justify-center gap-2 rounded-sm bg-green-500 px-4 py-2 text-white"
+                        >
+                            <Plus class="h-4 w-4" />
+                            New Supplier
+                        </button>
+                    </div>
+                    <table class="w-full min-w-[560px] mt-2 divide-y divide-slate-200 text-sm text-left">
+                        <thead class="sticky z-10 top-0 tracking-wide border-b border-gray-200 text-black">
+                            <tr>
+                                <td class="px-2 py-2 font-medium">#</td>
+                                <td class="px-2 py-2 font-medium">Name</td>
+                                <td class="px-2 py-2 font-medium">Contact</td>
+                                <td class="px-2 py-2 font-medium">Address</td>
+                                <td class="px-2 py-2 font-medium">Actions</td>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr v-if="loading">
+                                <td class="px-4 py-12 text-gray-400 text-center" colspan="5">Loading Suppliers</td>
+                            </tr>
+                            <tr v-else-if="!suppliers.length">
+                                <td class="px-4 py-12 text-gray-400 text-center" colspan="5">No suppliers found</td>
+                            </tr>
+                            <tr v-for="(supp,index) in suppliers" :key="supp.id">
+                                <td class="px-2 py-2 font-medium">{{ index + 1 }}</td>
+                                <td class="px-2 py-2 font-medium">{{ supp.name }}</td>
+                                <td class="px-2 py-2 font-medium">{{ supp.contact }}</td>
+                                <td class="px-2 py-2 font-medium">{{ supp.address }}</td>
+                                <td class="px-5 py-2 sm:px-5 text-gray-400">
+                                    <div class="flex items-center gap-0">
+                                    <button 
+                                        @click="editSupplier(supp)"
+                                        class="flex items-center justify-center h-7 w-7 rounded-sm bg-green-600 text-white cursor-pointer hover:bg-green-700 ">
+                                        <SquarePenIcon class="w-4 h-4"/>
+                                    </button>
+                                    <button 
+                                        @click="confirmDelete(supp)"
+                                        class="flex items-center justify-center h-7 w-7 rounded-sm bg-red-600 text-white cursor-pointer hover:bg-red-700">
+                                        <Trash2 class="w-4 h-4"/>
+                                    </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <div v-if="showModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center p-4 justify-center">
+                <div class="max-h-[80vh] max-w-2xl overflow-y-auto bg-white w-full rounded-lg shadow-sm">
+                    <div class="flex items-center justify-between border-b border-gray-400 p-4 sm:p-6">
+                        <h2 class="font-medium text-sm text-gray-600 sm:text-xl">
+                            {{ isEditingForm ? 'Edit System Supplier' : 'New Supplier'}}
+                        </h2>
+                        <button @click="closeModal" class="text-gray-400">
+                                <X class="w-4 h-4"/>
+                        </button>
+                    </div>
+                    <form @submit.prevent="saveSupplier" class="space-y-4 p-4 sm:p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" v-model="form.name" class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-green-500 outline-none">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Contact</label>
+                            <input type="tel" inputmode="numeric" v-model="form.contact" class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-green-500 outline-none">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Address</label>
+                            <input type="text" v-model="form.address" class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-green-500 outline-none">
+                        </div>
+                        <div class="flex flex-col-reverse justify-end gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center">
+                            <button @click="closeModal" type="button" class="w-full rounded-sm border border-gray-300 bg-gray-500 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600 sm:w-auto">
+                                Cancel
+                            </button>
+                            <button type="submit" :disabled="saving" class="flex w-full items-center justify-center gap-2 rounded-sm border border-gray-300 bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 sm:w-auto">
+                                <CircleCheck class="h-4 w-4 shrink-0" aria-hidden="true" />
+                                {{ saving ? 'Saving...': (isEditingForm? 'Update':'Submit') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div v-if="showDeleteModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center p-4 justify-center">
+                <div class="max-w-2xl w-full bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="font-medium text-lg">Delete System Supplier</h2>
+                    <p class="font-medium mt-2 text-gray-400 text-sm mb-4">
+                        Are you sure you want to this delete <span class="font-semibord text-gray-800">"{{ supplierToDelete?.name }}"? </span>This cannot be undone.
+                    </p>
+                    <div class="flex justify-end gap-3">
+                        <button @click="cancelDelete" type="button" class="rounded-sm border border-gray-300 bg-gray-500 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600">
+                            Cancel
+                        </button>
+                        <button @click="deleteSupplier" :disabled="deleting" type="button" class="flex items-center just-fy-center gap-0 rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 ">
+                         <CircleCheck class="w-4 h-4 "/>   {{ deleting ? 'Deleting...' : 'Yes' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
