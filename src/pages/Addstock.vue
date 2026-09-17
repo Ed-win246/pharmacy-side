@@ -227,13 +227,12 @@ async function submitStockBatch() {
                             </h3>
                             <button @click="stockItems = []" class="text-xs text-red-600 hover:underline cursor-pointer">Clear all</button>
                         </div>
-
-                        <div class="overflow-x-auto max-h-[380px]">
-                            <table class="w-full text-left border-collapse text-sm">
+                        <div class="overflow-x-4 max-h-[380px] ">
+                            <table class="w-full text-left border-collapse text-sm overflow-auto">
                                 <thead class="text-gray-600 text-xs sticky top-0">
                                     <tr>
                                         <th class="py-2 px-2">#</th>
-                                        <th class="py-2 px-2">Batch / Expiry</th>
+                                        <th class="py-2 px-2">Batch Level</th>
                                         <th class="py-2 px-2">Product Name</th>
                                         <th class="py-2 px-2">Unit Name</th>
                                         <th class="py-2 px-2">Total Price</th>
@@ -242,21 +241,21 @@ async function submitStockBatch() {
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 text-gray-700">
                                     <tr v-for="(item, index) in stockItems" :key="item.id" class="hover:bg-gray-50">
-                                        <td class="py-2 px-3 font-medium">{{ index + 1 }}</td>
-                                        <td class="py-2.5 px-3 text-xs">
+                                        <td class="py-2 px-2 font-medium">{{ index + 1 }}</td>
+                                        <td class="py-2 px-2 text-xs">
                                             <div>{{ item.batch_number }}</div>
                                             <div class="text-gray-400">{{ item.expiry_date }}</div>
                                         </td>
-                                        <td class="py-2.5 px-3">
+                                        <td class="py-2 px-2">
                                             <div class="font-medium text-gray-900 text-xs">{{ item.medicine }}</div>
                                             <div class="text-xs text-gray-400">{{ item.category }}</div>
                                         </td>
-                                        <td class="py-2.5 px-3">
+                                        <td class="py-2 px-2">
                                             <div class="font-medium text-xs">{{ item.unit }}</div>
                                             <div class="text-xs text-green-700">Qty:{{ item.quantity }}</div>
                                         </td>
-                                        <td class="py-2.5 px-3 text-right font-medium">{{ item.buying_price }}</td>
-                                        <td class="py-2.5 px-3 text-center">
+                                        <td class="py-2 px-2  font-medium">{{ item.buying_price }}</td>
+                                        <td class="py-2 px-2 text-center">
                                             <button @click="removeItem(index)" class="rounded hover:bg-red-800 p-1 cursor-pointer bg-red-700 text-white" title="Remove item">
                                                 <Trash2 class="w-4 h-4" />
                                             </button>
