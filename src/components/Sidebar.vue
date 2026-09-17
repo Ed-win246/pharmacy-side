@@ -166,7 +166,7 @@ function logout() {
         :class="[
             isOpen ? 'translate-x-0' : '-translate-x-full',
             isCollapsed ? 'lg:w-20' : 'lg:w-64',
-            'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white shadow-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-xs select-none'
+            'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-green-900 shadow-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-xs select-none'
         ]"
     >
         <!-- Header -->
@@ -190,7 +190,6 @@ function logout() {
                     @click="emit('close')"
                     type="button"
                     class="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-lg lg:hidden cursor-pointer"
-                
                 >
                     <X class="w-5 h-5" />
                 </button>
@@ -203,7 +202,7 @@ function logout() {
                 v-for="item in menuItem"
                 :key="item.name"
                 :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
+                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-black hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
                 :class="[
                     isCollapsed ? 'justify-center px-2' : 'px-3.5'
                 ]"
@@ -218,16 +217,16 @@ function logout() {
                 <button
                     @click="toggleMedicineMenu"
                     type="button"
-                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group"
+                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group "
                     :class="[
                         isCollapsed ? 'justify-center px-2' : 'px-3.5',
-                        isMedicineActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                        isMedicineActive ? 'text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
                     ]"
                     :title="isCollapsed ? 'Medicine' : ''"
                 >
                     <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
                         <Pill class="w-5 h-5 shrink-0" :class="{ 'text-green-600': isMedicineActive }" />
-                        <span v-if="!isCollapsed" class="truncate">Medicine</span>
+                        <span v-if="!isCollapsed" class="truncate text-black">Medicine</span>
                     </span>
                     <ChevronDown
                         v-if="!isCollapsed"
@@ -254,7 +253,7 @@ function logout() {
                             v-for="item in medicinesubItems"
                             :key="item.name"
                             :to="item.route"
-                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
+                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-white  hover:text-black transition-colors duration-200"
                             :class="[
                                 isCollapsed ? 'justify-center px-2' : 'px-3'
                             ]"
@@ -276,13 +275,13 @@ function logout() {
                     class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-800 group"
                     :class="[
                         isCollapsed ? 'justify-center px-2' : 'px-3.5',
-                        isInventoryActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                        isInventoryActive ? 'text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
                     ]"
                     :title="isCollapsed ? 'Inventory' : ''"
                 >
                     <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
                         <FolderArchive class="w-5 h-5 shrink-0" :class="{ 'text-green-600': isInventoryActive }" />
-                        <span v-if="!isCollapsed" class="truncate">Inventory</span>
+                        <span v-if="!isCollapsed" class="truncate text-black">Inventory</span>
                     </span>
                     <ChevronDown
                         v-if="!isCollapsed"
@@ -309,11 +308,11 @@ function logout() {
                             v-for="item in inventoryItems"
                             :key="item.name"
                             :to="item.route"
-                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
+                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-white hover:text-black  duration-800"
                             :class="[
                                 isCollapsed ? 'justify-center px-2' : 'px-3'
                             ]"
-                            active-class="bg-green-50 text-green-600 font-semibold"
+                            active-class="text-green-600 font-semibold"
                             :title="isCollapsed ? item.name : ''"
                         >
                             <component :is="item.icon" class="w-4 h-4 shrink-0" />
@@ -336,8 +335,23 @@ function logout() {
                 :title="isCollapsed ? item.name : ''"
             >
                 <component :is="item.icon" class="w-5 h-5 shrink-0" />
-                <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
+                <span v-if="!isCollapsed" class="truncate text-black">{{ item.name }}</span>
             </router-link>
+
+            <!-- expenses droprwon-->
+             <div class="space-y-1">
+                <button 
+                @click="toggleexpensesMenu"
+                type="button"
+                class="w-full items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors duration-800 group"
+                :class="[
+                    isCollapsed ? 'justify-center px-2 ':'px-3.5',
+                    isExpenseActive ? 'bg-grenn-50/70 text-green-600 font-semibold' : 'text-black hover:bg-gray-100'
+                ]"
+                :title="isCollapsed ? 'expenses': ''">
+
+                </button>
+             </div>
 
             <!-- settings dropdown-->
             <div class="space-y-1">
@@ -347,13 +361,13 @@ function logout() {
                 class="w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colrs duration-800 group"
                 :class="[
                     isCollapsed ? 'justify-center px-2' :'px-3.5',
-                    isSettingsActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                    isSettingsActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-black hover:bg-gray-100 hover:text-green-600'
                 ]"
                 :title="isCollapsed ? 'settings': ''">
 
                 <span class="flex items-center gap-3 min-w-0" :class="{'justify-center': isCollapsed}">
                     <Settings class="w-5 h-5 shrink-0" :class="{'text-green': isSettingsActive}"/>
-                    <span v-if="!isCollapsed" class="truncate">System Settings</span>
+                    <span v-if="!isCollapsed" class="truncate text-black">System Settings</span>
                 </span>
                 <ChevronDown
                 v-if="!isCollapsed"
@@ -369,7 +383,7 @@ function logout() {
                             v-for="item in settingsItems"
                             :key="item.name"
                             :to="item.route"
-                            class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transitions-colors duration-800"
+                            class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-white hover:bg-gray-100 hover:text-black transitions-colors duration-800"
                             :class="[
                                 isCollapsed? 'justify-center px-2' :'px-3.5'
                             ]"
