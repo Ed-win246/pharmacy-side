@@ -1,8 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, Package, Settings, ChevronDown, ChevronLeft,ChevronRight,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangl,BarChart3,LogOut,X
-} from 'lucide-vue-next';
+import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X,} from 'lucide-vue-next';
 
 const props = defineProps({
     isOpen: {
@@ -23,6 +22,9 @@ const user = ref(null);
 
 const medicineMenuOpen = ref(false);
 const inventoryMenuOpen = ref(false);
+const settingsMenuOpen=ref(false);
+const expensesMenuOpen=ref(false);
+const salesMenuOpen=ref(false);
 
 const menuItem = [
     { name: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
@@ -44,10 +46,32 @@ const inventoryItems = [
     { name: 'System Suppliers', icon: Truck, route: '/suppliers' },
     { name: 'Expired Stock', icon: AlertTriangle, route: '/expiredstock' }
 ];
+const settingsItems=[
+    {name:'System Users', route:'/users'},
+    {name:'System Roles', route:'/roles'},
+    {name:'Permissions', route:'/permissions'},
+    {name:'Audit Trails', route:'/audits'},
+    {name:'Facility Profile', route:'/facilityprofile'},
+    {name:'Facility Settings', route:'/facilitysettings'},
+    {name:'Payment Options', route:'/paymentoptions'}
+];
+
+const expensesItems=[
+    {name:'Add an Expense', route:'/addexpense'},
+    {name:'Expenses', route:'/expenses'},
+    {name:'Categories',route:'/categoryexpenses'},
+    {name:'Expense Items', route:'/expenseitems'}
+];
+
+const salesItem=[
+    {name:'Add a sale',route:'/sellproduct'},
+    {name:'View Sale', route:'/viewsales'},
+    {name:'Customers', route:'/customers'}
+]
 
 const othermenuItems = [
     { name: 'Reports', icon: BarChart3, route: '/reports' },
-    { name: 'System Settings', icon: Settings, route: '/settings' },
+    // { name: 'System Settings', icon: Settings, route: '/settings' },
 ];
 
 const isMedicineActive = computed(() => {
@@ -57,11 +81,20 @@ const isMedicineActive = computed(() => {
 const isInventoryActive = computed(() => {
     return inventoryItems.some(item => route.path === item.route);
 });
+const isSettingsActive=computed(()=>{
+    return settingsItems.some(item =>route.path === item.route);
+ });
 
+
+const isExpenseActive= computed(()=>{
+    return expensesItems.some(item=>route.path === item.path);
+ })
 
 onMounted(() => {
     if (isMedicineActive.value) medicineMenuOpen.value = true;
     if (isInventoryActive.value) inventoryMenuOpen.value = true;
+    if(isSettingsActive.value) settingsMenuOpen.value=true;
+    if(isExpenseActive.value) expensesMenuOpen.value=true;
 });
 
 watch(() => route.path, (newPath) => {
@@ -70,6 +103,12 @@ watch(() => route.path, (newPath) => {
     }
     if (inventoryItems.some(item => item.route === newPath)) {
         inventoryMenuOpen.value = true;
+    }
+    if(settingsItems.some(item=>item.route === newPath)){
+        settingsMenuOpen.value=true;
+    }
+    if(expensesItems.some(item=>item.route === newPath)){
+        expensesMenuOpen.value=true;
     }
 });
 
@@ -88,6 +127,24 @@ function toggleinventoryMenu() {
         inventoryMenuOpen.value = true;
     } else {
         inventoryMenuOpen.value = !inventoryMenuOpen.value;
+    }
+}
+
+function togglesettingsMenu(){
+    if(props.isCollapsed){
+        emit('toggleCollapse');
+        settingsMenuOpen.value=true;
+    }else{
+        settingsMenuOpen.value = !settingsMenuOpen.value;
+    }
+}
+
+function toggleexpensesMenu(){
+    if(props.isCollapsed){
+        emit('toggleCollapse');
+        expensesMenuOpen.value = true;
+    }else{
+        expensesMenuOpen.value = !expensesMenuOpen.value;
     }
 }
 
@@ -216,7 +273,7 @@ function logout() {
                 <button
                     @click="toggleinventoryMenu"
                     type="button"
-                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group"
+                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-800 group"
                     :class="[
                         isCollapsed ? 'justify-center px-2' : 'px-3.5',
                         isInventoryActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
@@ -229,7 +286,7 @@ function logout() {
                     </span>
                     <ChevronDown
                         v-if="!isCollapsed"
-                        class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-300 ease-in-out"
+                        class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-800 ease-in-out"
                         :class="{ 'rotate-180 text-green-600': inventoryMenuOpen }"
                     />
                 </button>
@@ -271,7 +328,7 @@ function logout() {
                 v-for="item in othermenuItems"
                 :key="item.name"
                 :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
+                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-800"
                 :class="[
                     isCollapsed ? 'justify-center px-2' : 'px-3.5'
                 ]"
@@ -281,13 +338,55 @@ function logout() {
                 <component :is="item.icon" class="w-5 h-5 shrink-0" />
                 <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
             </router-link>
+
+            <!-- settings dropdown-->
+            <div class="space-y-1">
+                <button
+                @click="togglesettingsMenu"
+                type="button"
+                class="w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colrs duration-800 group"
+                :class="[
+                    isCollapsed ? 'justify-center px-2' :'px-3.5',
+                    isSettingsActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                ]"
+                :title="isCollapsed ? 'settings': ''">
+
+                <span class="flex items-center gap-3 min-w-0" :class="{'justify-center': isCollapsed}">
+                    <Settings class="w-5 h-5 shrink-0" :class="{'text-green': isSettingsActive}"/>
+                    <span v-if="!isCollapsed" class="truncate">System Settings</span>
+                </span>
+                <ChevronDown
+                v-if="!isCollapsed"
+                class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-800 ease-in-out"
+                :class="{'rotate-180 text-green-600': settingsMenuOpen}"/>
+
+                </button>
+                    <div v-if="settingsMenuOpen"
+                        :class="[
+                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 py-1 space-y-1 border-l-2 border-gray-100 ml-5 mt-1'
+                        ]">
+                        <router-link
+                            v-for="item in settingsItems"
+                            :key="item.name"
+                            :to="item.route"
+                            class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transitions-colors duration-800"
+                            :class="[
+                                isCollapsed? 'justify-center px-2' :'px-3.5'
+                            ]"
+                            
+                            active-class="bg-green-50  text-green-600 font-semibld"
+                            :title="isCollapsed ? item.name :'' " >
+                            <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
+                        </router-link>
+                    </div>
+            </div>
         </nav>
 
         <!-- Footer / Logout -->
         <div class="p-3 border-t border-gray-200 flex items-center justify-between" :class="{ 'justify-center': isCollapsed }">
             <div v-if="user && !isCollapsed" class="min-w-0 pr-2">
                 <p class="truncate text-xs font-semibold text-gray-800">
-                    {{ user.name || user.email || 'User' }}
+                    {{ user.name || user.owner_name || user.username || user.full_name || user.email || 'User' }}
                 </p>
                 <p class="truncate text-[10px] text-gray-500">
                     {{ user.role || 'Staff' }}
