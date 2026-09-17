@@ -102,7 +102,7 @@ async function deleteUnit(){
         toast.success('Product Unit deleted successfully');
 
     }catch(error){
-        console.error('Error deleting product unit');
+        console.error('Error deleting product unit',error);
         toast.error('Error deleting product unit');
     }finally{
         deleting.value=false;
