@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X,} from 'lucide-vue-next';
+import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X, Wallet,} from 'lucide-vue-next';
 
 const props = defineProps({
     isOpen: {
@@ -87,7 +87,7 @@ const isSettingsActive=computed(()=>{
 
 
 const isExpenseActive= computed(()=>{
-    return expensesItems.some(item=>route.path === item.path);
+    return expensesItems.some(item => route.path === item.route);
  })
 
 onMounted(() => {
@@ -166,21 +166,21 @@ function logout() {
         :class="[
             isOpen ? 'translate-x-0' : '-translate-x-full',
             isCollapsed ? 'lg:w-20' : 'lg:w-64',
-            'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-green-900 shadow-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-xs select-none'
+            'fixed inset-y-0 left-0 z-50 flex h-screen max-h-screen shrink-0 flex-col overflow-hidden border-r border-green-800/60 bg-green-900 text-emerald-100 shadow-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 lg:shadow-xs select-none'
         ]"
     >
         <!-- Header -->
-        <div class="p-4 border-b border-gray-100 flex items-center justify-between" :class="{ 'justify-center': isCollapsed }">
+        <div class="p-4 border-b border-green-800/60 flex items-center justify-between" :class="{ 'justify-center': isCollapsed }">
             <div class="flex items-center gap-3 min-w-0" v-if="!isCollapsed">
-                <div class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center text-white font-bold text-lg shadow-xs shrink-0">
+                <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">
                     P
                 </div>
                 <div class="min-w-0">
-                    <h1 class="text-xl font-bold text-green-600 leading-tight truncate">Pharmacy Portal</h1>
-                    <p class="text-xs font-medium text-gray-400 truncate">Management System</p>
+                    <h1 class="text-lg font-bold text-white leading-tight truncate">Pharmacy Portal</h1>
+                    <p class="text-xs font-medium text-emerald-300/80 truncate">Management System</p>
                 </div>
             </div>
-            <div v-else class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center text-white font-bold text-lg shadow-xs shrink-0">
+            <div v-else class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">
                 P
             </div>
 
@@ -189,49 +189,50 @@ function logout() {
                 <button
                     @click="emit('close')"
                     type="button"
-                    class="p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 rounded-lg lg:hidden cursor-pointer"
+                    class="p-1.5 text-emerald-300 hover:bg-green-800 hover:text-white rounded-lg lg:hidden cursor-pointer transition-colors"
                 >
                     <X class="w-5 h-5" />
                 </button>
             </div>
         </div>
 
-
         <nav class="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
+            <!-- Dashboard Link -->
             <router-link
                 v-for="item in menuItem"
                 :key="item.name"
                 :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-black hover:bg-gray-100 hover:text-green-600 transition-colors duration-200"
+                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100 hover:bg-green-800/80 hover:text-white transition-colors duration-200"
                 :class="[
                     isCollapsed ? 'justify-center px-2' : 'px-3.5'
                 ]"
-                active-class="bg-green-50 text-green-600 font-semibold"
+                active-class="bg-emerald-600 text-white font-semibold shadow-xs"
                 :title="isCollapsed ? item.name : ''"
             >
-                <component :is="item.icon" class="w-5 h-5 shrink-0" />
+                <component :is="item.icon" class="w-5 h-5 shrink-0 text-emerald-300" />
                 <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
             </router-link>
 
+            <!-- Medicine Dropdown -->
             <div class="space-y-1">
                 <button
                     @click="toggleMedicineMenu"
                     type="button"
-                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group "
+                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group"
                     :class="[
                         isCollapsed ? 'justify-center px-2' : 'px-3.5',
-                        isMedicineActive ? 'text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                        isMedicineActive ? 'bg-green-800/90 text-white font-semibold' : 'text-emerald-100 hover:bg-green-800/80 hover:text-white'
                     ]"
                     :title="isCollapsed ? 'Medicine' : ''"
                 >
                     <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
-                        <Pill class="w-5 h-5 shrink-0" :class="{ 'text-green-600': isMedicineActive }" />
-                        <span v-if="!isCollapsed" class="truncate text-black">Medicine</span>
+                        <Pill class="w-5 h-5 shrink-0 text-emerald-300" />
+                        <span v-if="!isCollapsed" class="truncate">Medicine</span>
                     </span>
                     <ChevronDown
                         v-if="!isCollapsed"
-                        class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-300 ease-in-out"
-                        :class="{ 'rotate-180 text-green-600': medicineMenuOpen }"
+                        class="w-4 h-4 shrink-0 text-emerald-300/80 group-hover:text-white transition-transform duration-300 ease-in-out"
+                        :class="{ 'rotate-180 text-white': medicineMenuOpen }"
                     />
                 </button>
 
@@ -246,21 +247,21 @@ function logout() {
                     <div 
                         v-show="medicineMenuOpen" 
                         :class="[
-                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-green-100 ml-5 mt-1'
+                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-emerald-700/60 ml-5 mt-1'
                         ]"
                     >
                         <router-link
                             v-for="item in medicinesubItems"
                             :key="item.name"
                             :to="item.route"
-                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-white  hover:text-black transition-colors duration-200"
+                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-emerald-200/90 hover:bg-green-800/60 hover:text-white transition-colors duration-200"
                             :class="[
                                 isCollapsed ? 'justify-center px-2' : 'px-3'
                             ]"
-                            active-class="bg-green-50 text-green-600 font-semibold"
+                            active-class="bg-emerald-600 text-white font-semibold shadow-xs"
                             :title="isCollapsed ? item.name : ''"
                         >
-                            <component :is="item.icon" class="w-4 h-4 shrink-0" />
+                            <component :is="item.icon" class="w-4 h-4 shrink-0 text-emerald-300" />
                             <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
                         </router-link>
                     </div>
@@ -272,21 +273,21 @@ function logout() {
                 <button
                     @click="toggleinventoryMenu"
                     type="button"
-                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-800 group"
+                    class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 group"
                     :class="[
                         isCollapsed ? 'justify-center px-2' : 'px-3.5',
-                        isInventoryActive ? 'text-green-600 font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-green-600'
+                        isInventoryActive ? 'bg-green-800/90 text-white font-semibold' : 'text-emerald-100 hover:bg-green-800/80 hover:text-white'
                     ]"
                     :title="isCollapsed ? 'Inventory' : ''"
                 >
                     <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
-                        <FolderArchive class="w-5 h-5 shrink-0" :class="{ 'text-green-600': isInventoryActive }" />
-                        <span v-if="!isCollapsed" class="truncate text-black">Inventory</span>
+                        <FolderArchive class="w-5 h-5 shrink-0 text-emerald-300" />
+                        <span v-if="!isCollapsed" class="truncate">Inventory</span>
                     </span>
                     <ChevronDown
                         v-if="!isCollapsed"
-                        class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-800 ease-in-out"
-                        :class="{ 'rotate-180 text-green-600': inventoryMenuOpen }"
+                        class="w-4 h-4 shrink-0 text-emerald-300/80 group-hover:text-white transition-transform duration-300 ease-in-out"
+                        :class="{ 'rotate-180 text-white': inventoryMenuOpen }"
                     />
                 </button>
 
@@ -301,21 +302,21 @@ function logout() {
                     <div 
                         v-show="inventoryMenuOpen" 
                         :class="[
-                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-green-100 ml-5 mt-1'
+                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-emerald-700/60 ml-5 mt-1'
                         ]"
                     >
                         <router-link
                             v-for="item in inventoryItems"
                             :key="item.name"
                             :to="item.route"
-                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-white hover:text-black  duration-800"
+                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-emerald-200/90 hover:bg-green-800/60 hover:text-white transition-colors duration-200"
                             :class="[
                                 isCollapsed ? 'justify-center px-2' : 'px-3'
                             ]"
-                            active-class="text-green-600 font-semibold"
+                            active-class="bg-emerald-600 text-white font-semibold shadow-xs"
                             :title="isCollapsed ? item.name : ''"
                         >
-                            <component :is="item.icon" class="w-4 h-4 shrink-0" />
+                            <component :is="item.icon" class="w-4 h-4 shrink-0 text-emerald-300" />
                             <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
                         </router-link>
                     </div>
@@ -327,89 +328,120 @@ function logout() {
                 v-for="item in othermenuItems"
                 :key="item.name"
                 :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-green-600 transition-colors duration-800"
+                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100 hover:bg-green-800/80 hover:text-white transition-colors duration-200"
                 :class="[
                     isCollapsed ? 'justify-center px-2' : 'px-3.5'
                 ]"
-                active-class="bg-green-50 text-green-600 font-semibold"
+                active-class="bg-emerald-600 text-white font-semibold shadow-xs"
                 :title="isCollapsed ? item.name : ''"
             >
-                <component :is="item.icon" class="w-5 h-5 shrink-0" />
-                <span v-if="!isCollapsed" class="truncate text-black">{{ item.name }}</span>
+                <component :is="item.icon" class="w-5 h-5 shrink-0 text-emerald-300" />
+                <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
             </router-link>
 
-            <!-- expenses droprwon-->
-             <div class="space-y-1">
+            <!-- Expenses Dropdown -->
+            <div class="space-y-1">
                 <button 
-                @click="toggleexpensesMenu"
-                type="button"
-                class="w-full items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors duration-800 group"
-                :class="[
-                    isCollapsed ? 'justify-center px-2 ':'px-3.5',
-                    isExpenseActive ? 'bg-grenn-50/70 text-green-600 font-semibold' : 'text-black hover:bg-gray-100'
-                ]"
-                :title="isCollapsed ? 'expenses': ''">
-
+                    @click="toggleexpensesMenu"
+                    type="button"
+                    class="w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors duration-200 group"
+                    :class="[
+                        isCollapsed ? 'justify-center px-2' : 'px-3.5',
+                        isExpenseActive ? 'bg-green-800/90 text-white font-semibold' : 'text-emerald-100 hover:bg-green-800/80 hover:text-white'
+                    ]"
+                    :title="isCollapsed ? 'Expenses' : ''"
+                >
+                    <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
+                        <Wallet class="w-5 h-5 shrink-0 text-emerald-300" />
+                        <span v-if="!isCollapsed" class="truncate">Expenses</span>
+                    </span>
+                    <ChevronDown 
+                        v-if="!isCollapsed"
+                        class="w-4 h-4 shrink-0 text-emerald-300/80 group-hover:text-white transition-transform duration-300 ease-in-out"
+                        :class="{ 'rotate-180 text-white' : expensesMenuOpen }"
+                    />
                 </button>
-             </div>
+                <div 
+                    v-show="expensesMenuOpen"
+                    :class="[
+                        isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-emerald-700/60 ml-5 mt-1'
+                    ]"
+                >
+                    <router-link
+                        v-for="item in expensesItems"
+                        :key="item.name"
+                        :to="item.route"
+                        class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-emerald-200/90 hover:bg-green-800/60 hover:text-white transition-colors duration-200"
+                        :class="[
+                            isCollapsed ? 'justify-center px-2' : 'px-3'
+                        ]"
+                        active-class="bg-emerald-600 text-white font-semibold shadow-xs"
+                        :title="isCollapsed ? item.name : ''"
+                    >
+                        <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
+                    </router-link>
+                </div>
+            </div>
 
-            <!-- settings dropdown-->
+            <!-- Settings Dropdown -->
             <div class="space-y-1">
                 <button
-                @click="togglesettingsMenu"
-                type="button"
-                class="w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colrs duration-800 group"
-                :class="[
-                    isCollapsed ? 'justify-center px-2' :'px-3.5',
-                    isSettingsActive ? 'bg-green-50/70 text-green-600 font-semibold' : 'text-black hover:bg-gray-100 hover:text-green-600'
-                ]"
-                :title="isCollapsed ? 'settings': ''">
-
-                <span class="flex items-center gap-3 min-w-0" :class="{'justify-center': isCollapsed}">
-                    <Settings class="w-5 h-5 shrink-0" :class="{'text-green': isSettingsActive}"/>
-                    <span v-if="!isCollapsed" class="truncate text-black">System Settings</span>
-                </span>
-                <ChevronDown
-                v-if="!isCollapsed"
-                class="w-4 h-4 shrink-0 text-gray-400 group-hover:text-green-600 transition-transform duration-800 ease-in-out"
-                :class="{'rotate-180 text-green-600': settingsMenuOpen}"/>
-
+                    @click="togglesettingsMenu"
+                    type="button"
+                    class="w-full flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium transition-colors duration-200 group"
+                    :class="[
+                        isCollapsed ? 'justify-center px-2' : 'px-3.5',
+                        isSettingsActive ? 'bg-green-800/90 text-white font-semibold' : 'text-emerald-100 hover:bg-green-800/80 hover:text-white'
+                    ]"
+                    :title="isCollapsed ? 'Settings' : ''"
+                >
+                    <span class="flex items-center gap-3 min-w-0" :class="{ 'justify-center': isCollapsed }">
+                        <Settings class="w-5 h-5 shrink-0 text-emerald-300" />
+                        <span v-if="!isCollapsed" class="truncate">System Settings</span>
+                    </span>
+                    <ChevronDown
+                        v-if="!isCollapsed"
+                        class="w-4 h-4 shrink-0 text-emerald-300/80 group-hover:text-white transition-transform duration-300 ease-in-out"
+                        :class="{ 'rotate-180 text-white': settingsMenuOpen }"
+                    />
                 </button>
-                    <div v-if="settingsMenuOpen"
+                <div 
+                    v-show="settingsMenuOpen"
+                    :class="[
+                        isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-emerald-700/60 ml-5 mt-1'
+                    ]"
+                >
+                    <router-link
+                        v-for="item in settingsItems"
+                        :key="item.name"
+                        :to="item.route"
+                        class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-emerald-200/90 hover:bg-green-800/60 hover:text-white transition-colors duration-200"
                         :class="[
-                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 py-1 space-y-1 border-l-2 border-gray-100 ml-5 mt-1'
-                        ]">
-                        <router-link
-                            v-for="item in settingsItems"
-                            :key="item.name"
-                            :to="item.route"
-                            class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-white hover:bg-gray-100 hover:text-black transitions-colors duration-800"
-                            :class="[
-                                isCollapsed? 'justify-center px-2' :'px-3.5'
-                            ]"
-                            
-                            active-class="bg-green-50  text-green-600 font-semibld"
-                            :title="isCollapsed ? item.name :'' " >
-                            <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
-                        </router-link>
-                    </div>
+                            isCollapsed ? 'justify-center px-2' : 'px-3'
+                        ]"
+                        active-class="bg-emerald-600 text-white font-semibold shadow-xs"
+                        :title="isCollapsed ? item.name : ''"
+                    >
+                        <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
+                    </router-link>
+                </div>
             </div>
         </nav>
 
         <!-- Footer / Logout -->
-        <div class="p-3 border-t border-gray-200 flex items-center justify-between" :class="{ 'justify-center': isCollapsed }">
+        <div class="p-3 border-t border-green-800/60 flex items-center justify-between" :class="{ 'justify-center': isCollapsed }">
             <div v-if="user && !isCollapsed" class="min-w-0 pr-2">
-                <p class="truncate text-xs font-semibold text-gray-800">
+                <p class="truncate text-xs font-semibold text-white">
                     {{ user.name || user.owner_name || user.username || user.full_name || user.email || 'User' }}
                 </p>
-                <p class="truncate text-[10px] text-gray-500">
+                <p class="truncate text-[10px] text-emerald-300/80">
                     {{ user.role || 'Staff' }}
                 </p>
             </div>
             <button
                 @click="logout"
                 type="button"
-                class="inline-flex items-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg text-xs font-medium transition-colors duration-200 shrink-0 cursor-pointer"
+                class="inline-flex items-center gap-1.5 bg-red-500/20 text-red-200 hover:bg-red-600 hover:text-white border border-red-500/30 rounded-lg text-xs font-medium transition-colors duration-200 shrink-0 cursor-pointer"
                 :class="[
                     isCollapsed ? 'p-2 justify-center' : 'px-3 py-1.5'
                 ]"
