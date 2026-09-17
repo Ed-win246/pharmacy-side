@@ -51,11 +51,11 @@ watch(() => route.path, () => {
             @click="toggleCollapse"
             type="button"
             class="p-2 text-gray-600 hover:bg-gray-100 hover:text-green-600 rounded-lg focus:outline-none cursor-pointer transition-colors flex items-center gap-2"
-            :title="isSidebarCollapsed ? '' : ''"
           >
             <PanelLeftClose v-if="!isSidebarCollapsed" class="w-5 h-5 text-gray-600" />
             <PanelLeftOpen v-else class="w-5 h-5 text-green-600" />
           </button>
+          <span class="text-base font-semibold text-gray-800">Pharmacy Testing</span>
         </div>
 
         <div class="flex items-center gap-4 text-xs font-medium text-gray-500">
