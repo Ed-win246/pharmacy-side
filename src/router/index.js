@@ -23,6 +23,10 @@ import FacilityProfile from "@/pages/FacilityProfile.vue";
 import FacilitySettings from "@/pages/FacilitySettings.vue";
 import Roles from "@/pages/Roles.vue";
 import Permissions from "@/pages/Permissions.vue";
+import Expenses from "@/pages/Expenses.vue";
+import CategoryExpense from "@/pages/CategoryExpense.vue";
+import ExpenseItems from "@/pages/ExpenseItems.vue";
+import AddExpense from "@/pages/AddExpense.vue";
 
 const routes = [
     { 
@@ -61,6 +65,10 @@ const routes = [
             {path:'facilitysettings',name:'facilitysettings', component:FacilitySettings},
             {path:'roles',name:'roles', component:Roles},
             {path:'permissions',name:'permissions', component:Permissions},
+            {path:'expenses',name:'expenses', component: Expenses},
+            {path:'addexpense',name:'addexpenses', component: AddExpense},
+            {path:'categoryexpenses',name:'categoryexpenses', component: CategoryExpense},
+            {path:'expenseitems',name:'expenseitems', component: ExpenseItems},
         ],
     },
     { 
