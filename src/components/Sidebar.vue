@@ -328,7 +328,7 @@ function logout() {
                 v-for="item in othermenuItems"
                 :key="item.name"
                 :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-emerald-100 hover:bg-green-800/80 hover:text-white transition-colors duration-200"
+                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-green-100 hover:bg-green-800/80 hover:text-white transition-colors duration-200"
                 :class="[
                     isCollapsed ? 'justify-center px-2' : 'px-3.5'
                 ]"
@@ -441,7 +441,7 @@ function logout() {
             <button
                 @click="logout"
                 type="button"
-                class="inline-flex items-center gap-1.5 bg-red-500/20 text-red-200 hover:bg-red-600 hover:text-white border border-red-500/30 rounded-lg text-xs font-medium transition-colors duration-200 shrink-0 cursor-pointer"
+                class="inline-flex items-center gap-1.5 bg-white text-red-200 hover:bg-red-600 hover:text-white border border-red-100 rounded-lg text-xs font-medium transition-colors duration-200 shrink-0 cursor-pointer"
                 :class="[
                     isCollapsed ? 'p-2 justify-center' : 'px-3 py-1.5'
                 ]"

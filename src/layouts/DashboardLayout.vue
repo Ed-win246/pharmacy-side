@@ -59,7 +59,7 @@ watch(() => route.path, () => {
         </div>
 
         <div class="flex items-center gap-4 text-xs font-medium text-gray-500">
-          <span>Pharmacy Management Dashboard</span>
+          <span>Reports | Subscriptions</span>
         </div>
       </header>
 

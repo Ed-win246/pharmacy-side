@@ -327,7 +327,7 @@ async function submitStockBatch() {
                                         v-model="payment.payment_option"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     >
-                                    <select name="" >select option</select>
+                                    <option value="" >select option</option>
                                     <option value="">Cash</option>
                                     <option value="">Visa</option>
                                     </select>

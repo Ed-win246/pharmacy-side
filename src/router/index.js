@@ -16,6 +16,13 @@ import SystemStock from "@/pages/SystemStock.vue";
 import ReconcileStock from "@/pages/ReconcileStock.vue";
 import ExpiredStock from "@/pages/ExpiredStock.vue";
 import Suppliers from "@/pages/Suppliers.vue";
+import Payments from "@/pages/Payments.vue";
+import SystemUsers from "@/pages/SystemUsers.vue";
+import AuditTrails from "@/pages/AuditTrails.vue";
+import FacilityProfile from "@/pages/FacilityProfile.vue";
+import FacilitySettings from "@/pages/FacilitySettings.vue";
+import Roles from "@/pages/Roles.vue";
+import Permissions from "@/pages/Permissions.vue";
 
 const routes = [
     { 
@@ -46,7 +53,14 @@ const routes = [
             {path:'expiredstock',name:'expiredstock',component: ExpiredStock},
             {path:'suppliers', name:'suppliers', component: Suppliers},
             { path: 'reports', name: 'reports', component: Reports },
-            { path: 'settings', name: 'settings', component: Settings }
+            { path: 'settings', name: 'settings', component: Settings },
+            {path:'paymentoptions',name:'paymentoptions',component: Payments},
+            {path:'users', name:'systemsusers', component:SystemUsers},
+            {path:'audits', name:'audittrails',component: AuditTrails},
+            {path:'facilityprofile',name:'facilityprofile', component: FacilityProfile},
+            {path:'facilitysettings',name:'facilitysettings', component:FacilitySettings},
+            {path:'roles',name:'roles', component:Roles},
+            {path:'permissions',name:'permissions', component:Permissions},
         ],
     },
     { 

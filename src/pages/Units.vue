@@ -170,7 +170,7 @@ async function saveUnit(){
             </div>
             <button 
                 @click="addNewUnit"
-                class="flex w-full items-center justify-center gap-2 rounded-sm bg-green-500 px-3 py-2 text-sm font-medium text-white cursor-pointer sm:w-auto">
+                class="flex w-full items-center justify-center gap-2 rounded-sm bg-green-500 px-3 py-2 text-xs font-medium text-white cursor-pointer sm:w-auto">
                 <Plus class="w-4 h-4"/>New Product Unit
             </button>
         </div>

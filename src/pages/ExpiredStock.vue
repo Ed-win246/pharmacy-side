@@ -9,7 +9,7 @@ import { Eye } from 'lucide-vue-next';
         <div class="max-w-7xl h-full max-auto flex flex-col overflow-y-auto pb-10 p-2">
             <div class="flex items-center justify-between border-b border-gray-200 p-4">
                 <div>
-                    <h2 class="font-medium text-sm flex items-center uppercase gap-2">EXpired Products</h2>
+                    <h2 class="font-medium text-sm flex items-center uppercase gap-2">Expired Products</h2>
                 </div>
                     <div class="font-medium text-sm">
                         <router-link to="/dashboard" class="cursor-pointer text-black">Dashboard</router-link>

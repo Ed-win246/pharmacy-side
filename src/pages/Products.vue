@@ -170,7 +170,7 @@ const filterMedicines=computed(()=>{
       </div>
       <button 
         @click="addNewMedicine"
-        class="flex items-center rounded-sm gap-2 bg-green-600 text-white px-2 py-2  hover:bg-green-700 font-medium transition cursor-pointer"
+        class="flex items-center rounded-sm gap-2 bg-green-600 text-white text-xs px-2 py-2  hover:bg-green-700 font-medium transition cursor-pointer"
       >
         <Plus class="w-4 h-4" /> New Product
       </button>
