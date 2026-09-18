@@ -2,7 +2,7 @@
 import {ref, reactive, onMounted} from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-import { CircleCheck,  Plus, SquarePenIcon, Trash2, X } from 'lucide-vue-next';
+import { CircleCheck,  Download,  Plus, SquarePenIcon, Trash2, Upload, X } from 'lucide-vue-next';
 
 const suppliers=ref([]);
 const loading=ref(false);
@@ -139,6 +139,78 @@ async function saveSupplier(){
         saving.value=false;
     }
 }
+
+async function exportSuppliers(){
+    try{
+        const response = await api.get('/suppliers/export', { responseType: 'blob' });
+        downloadFile(response.data, 'suppliers.xlsx');
+    }catch(error){
+        console.error('Failed to export suppliers', error);
+        toast.error('Failed to export suppliers.');
+    }
+}
+
+async function downloadTemplate(){
+    try{
+        const response = await api.get('/suppliers/template', { responseType: 'blob' });
+        downloadFile(response.data, 'supplier-template.xlsx');
+    }catch(error){
+        console.error('Failed to download template', error);
+        toast.error('Failed to download template.');
+    }
+}
+
+// Shared helper: takes the raw file data and makes the browser save it
+function downloadFile(blobData, filename){
+    const blob = new Blob([blobData], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
+}
+
+const fileInput = ref(null);
+const importing = ref(false);
+
+function triggerFileSelect(){
+    fileInput.value.click();
+}
+
+async function handleFileSelected(event){
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const allowedExtensions = ['.xlsx', '.xls', '.csv'];
+    const fileExtension = `.${file.name.split('.').pop().toLowerCase()}`;
+    if(!allowedExtensions.includes(fileExtension)){
+        toast.error('Please select an Excel or CSV file.');
+        event.target.value = '';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    importing.value = true;
+    try{
+        await api.post('/suppliers/import', formData);
+        toast.success('Suppliers imported successfully');
+        await fetchSuppliers(); // refresh the table
+    }catch(error){
+        console.error('Failed to import suppliers', error);
+        const message = error.response?.data?.message
+            || error.response?.data?.error
+            || 'Failed to import suppliers.';
+        toast.error(message);
+    }finally{
+        importing.value = false;
+        event.target.value = ''; // reset so re-selecting the same file still fires 'change'
+    }
+}
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -154,14 +226,37 @@ async function saveSupplier(){
             </div>
             <div class="min-h-0 overflow-hidden flex-1">
                 <div class="h-full w-full overflow-auto">
-                    <div class="flex justify-end">
+                    <div class="flex items-end justify-end gap-2">
                         <button
                             @click="addNewSupplier"
-                            class="mt-2 flex shrink-0 items-center justify-center gap-2 rounded-sm bg-green-500 px-4 py-2 text-white"
+                            class="mt-2 flex items-center gap-2 rounded-sm bg-green-500 px-2 py-1.5 text-xs text-white"
                         >
                             <Plus class="h-4 w-4" />
                             New Supplier
                         </button>
+                        <div class="flex items-center justify-center gap-2">
+                        <button @click="triggerFileSelect" type="button" :disabled="importing"
+                            class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
+                            {{ importing ? 'Importing...' : 'Import suppliers' }}
+                            <Upload class="w-4 h-4"/>
+                        </button>
+                        <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="handleFileSelected">
+                         </div>
+
+                        <div class="flex items-center justify-center gap-2">
+                        <button @click="exportSuppliers" type="button"
+                            class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100">
+                            Export
+                            <Download class="h-4 w-4" />
+                        </button>
+                        </div>
+                        <div class="flex items-center just-center gap-2">
+                        <button @click="downloadTemplate" type="button"
+                            class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-3 py-3.5 text-xs text-gray-700 hover:bg-gray-100">
+                            Download Format
+                            <Download class="w-4 h-4"/>
+                        </button>
+                        </div>
                     </div>
                     <table class="w-full min-w-[560px] mt-2 divide-y divide-slate-200 text-sm text-left">
                         <thead class="sticky z-10 top-0 tracking-wide border-b border-gray-200 text-black">
