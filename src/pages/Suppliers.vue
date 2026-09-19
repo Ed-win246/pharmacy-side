@@ -2,7 +2,7 @@
 import {ref, reactive, onMounted, computed, watch} from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-import { CircleCheck,  Download,  Plus, SquarePenIcon, Trash2, Upload, X } from 'lucide-vue-next';
+import { CircleCheck,  Download,  Plus, SquarePenIcon, Trash2, Upload, X , Search, UploadIcon} from 'lucide-vue-next';
 
 const suppliers=ref([]);
 const loading=ref(false);
@@ -15,9 +15,21 @@ const deleting=ref(false);
 const saving=ref(false);
 const loggedUser=ref(null);
 
+//pagination state
 const currentPage=ref(1);
 const pageSize=ref(10);//show 10 entries
 const pageSizeOptions=[10,50,100,150,200];
+
+//search state
+const searchQuery=ref('');
+
+
+
+//import modal state
+const showImportModal=ref(false);
+const selectedFile=ref(null);
+const importing=ref(false);
+const fileInput=ref(null);
 
 
 try{
@@ -25,19 +37,19 @@ try{
 }catch{
     loggedUser.value=null;
 }
-
+//pagination functions 
 const totalPages=computed(()=>{
-    return Math.ceil(suppliers.value.length / pageSize.value ) || 1;
+    return Math.ceil(filteredSuppliers.value.length / pageSize.value ) || 1;//updated to filtered suppliers
 });
 
 const paginatedSuppliers=computed(()=>{// slice of the suppliers array
     const start= (currentPage.value - 1) * pageSize.value;
     const end = start + pageSize.value;
-    return suppliers.value.slice(start, end);
+    return filteredSuppliers.value.slice(start, end);//updated to search from filteredsupps instead of suppliers array.
 });
 
 //reset page whenever the pagesize or data length changes
-watch([pageSize, ()=> suppliers.value.length],()=>{
+watch([pageSize, searchQuery, ()=> suppliers.value.length],()=>{//also when the search query changes.
     currentPage.value=1;
 });
 
@@ -217,12 +229,19 @@ function downloadFile(blobData, filename){
     link.click();
     window.URL.revokeObjectURL(url);
 }
-
-const fileInput = ref(null);
-const importing = ref(false);
-
+//import modal functions
+function openImportModal(){
+    showImportModal.value=true;
+    selectedFile.value=null;
+}
+function closeImportModal(){
+    showImportModal.value=false;
+    selectedFile.value=null;
+}
 function triggerFileSelect(){
-    fileInput.value.click();
+    if(fileInput.value){
+        fileInput.value.click();
+    }
 }
 
 async function handleFileSelected(event){
@@ -234,25 +253,45 @@ async function handleFileSelected(event){
     if(!allowedExtensions.includes(fileExtension)){
         toast.error('Please select an Excel or CSV file.');
         event.target.value = '';
+        selectedFile.value=null;
         return;
     }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    importing.value = true;
-    try{
-        await api.post('/suppliers/import', formData);
-        toast.success('Suppliers imported successfully');
-        await fetchSuppliers(); // refresh the table
-    }catch(error){
-        console.error('Failed to import suppliers', error);
-        toast.error('Failed to import system suppliers');
-    }finally{
-        importing.value = false;
-        event.target.value = ''; // reset so re-selecting the same file still fires 'change'
-    }
+    selectedFile.value=file;
+    event.target.value='';
 }
+async function submitImport(){
+    if(!selectedFile.value){
+        toast.error('Please select a file first');
+        return;
+    }
+    const formData =new FormData();
+    formData.append('file',selectedFile.value);
+
+    importing.value=true;
+    try{
+        await api.post('/suppliers/import',formData);
+        toast.success('Suppliers imported sucessfully');
+        await fetchSuppliers();
+        closeImportModal();
+    }catch(error){
+        console.error('Failed to import File',error);
+        toast.error('Failed to import File');
+
+    }finally{
+        importing.value=false;
+    }
+}  
+
+
+//search state functionality
+const filteredSuppliers=computed(()=>{
+    const query= searchQuery.value.trim().toLocaleLowerCase();
+    if(!query) return suppliers.value;
+
+    return suppliers.value.filter(s=>(s.name ?? '').toLocaleLowerCase().includes(query) ||
+                                    (s.contact ?? '').toLocaleLowerCase().includes(query) || 
+                                    (s.address ?? '').toLocaleLowerCase().includes(query));
+});
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -285,12 +324,11 @@ async function handleFileSelected(event){
                             New Supplier
                         </button>
                         <div class="flex items-center justify-center gap-2">
-                        <button @click="triggerFileSelect" type="button" :disabled="importing"
+                        <button @click="openImportModal" type="button" :disabled="importing"
                             class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer">
                             {{ importing ? 'Importing...' : 'Import suppliers' }}
                             <Upload class="w-4 h-4"/>
                         </button>
-                        <input ref="fileInput" type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="handleFileSelected">
                          </div>
 
                         <div class="flex items-center justify-center gap-2">
@@ -309,6 +347,22 @@ async function handleFileSelected(event){
                         </div>
                     </div>
                     </div>
+                    <!--search filter-->
+                    <div class="relative flex-1 min-w-[180px] max-w-xs">
+                            <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
+                            <input type="text"
+                            v-model="searchQuery"
+                            placeholder="search suppliers..."
+                            class="w-full border border-gray-300 rounded-sm pl-8 pr-3 py-1.5 text-xs ">
+                            <button 
+                            v-if="searchQuery"
+                            @click="searchQuery=''"
+                            type="button"
+                            aria-label="Clear Search"
+                            class="absolute right-2 -translate-1/2 justify-center top-1/2 flex items-center w-4 h-4 text-gray-400">
+                            <X class="w-4 h-4 cursor-pointer"/>
+                            </button>
+                    </div>
                     <table class="w-full min-w-[560px] mt-2 divide-y divide-slate-200 text-sm text-left">
                         <thead class="sticky z-10 top-0 tracking-wide border-b border-gray-200 text-black">
                             <tr>
@@ -325,6 +379,9 @@ async function handleFileSelected(event){
                             </tr>
                             <tr v-else-if="!suppliers.length">
                                 <td class="px-4 py-12 text-gray-400 text-center" colspan="5">No suppliers found</td>
+                            </tr>
+                            <tr v-else-if="!filteredSuppliers.length" class="flex items-center justify-center mt-5">
+                                <td colspan="5" >No suppliers match "{{ searchQuery }}"</td>
                             </tr>
                             <tr v-for="(supp,index) in paginatedSuppliers" :key="supp.id">
                                 <td class="px-2 py-2 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
@@ -428,6 +485,50 @@ async function handleFileSelected(event){
                     </div>
                 </div>
             </div>
+
+            <!-- import modal-->
+             <div v-if="showImportModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center p-4 justify-center">
+                <div class="max-w-md w-full bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center justify-between border-b border-gray-400 p-4 sm:p-6">
+                        <h2 class="font-medium text-sm text-gray-600">
+                            Import Suppliers
+                        </h2>
+                        <button @click="closeImportModal" type="button" class="text-gray-400 hover:text-gray-600">
+                            <X class="w-4 h-4"/>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex flex-col items-center justify-center border-2 border-gray-400 rounded-lg p-6">
+                            <UploadIcon class="w-4 h-4"/>
+                            <p class="text-xs text-gray-600 mb-2">Select an EXcel(.xlsx, xls) or CSV file</p>
+                        </div>
+                        <button type="button"
+                        @click="triggerFileSelect"
+                        class="px-3 py-1.5 bg-gray-200 rounded-md text-xs font-medium text-gray-700 cursor pointer">
+                        Choose File
+                        </button>
+                        <input type="file"
+                        ref="fileInput"
+                        accept=".xlsx, .xls,.CSV"
+                        class="hidden"
+                        @change="handleFileSelected">
+                        <p v-if="selectedFile" 
+                        class="mt-3 text-xs font-semibold text-green-600 truncate max-w-full">
+                        Selected: {{ selectedFile.name }}</p>
+                    </div>
+                    <div class="flex justify-end gap-3 border-t border-gray-300 pt-4">
+                        <button @click="closeImportModal"
+                        type="button"
+                        class="rounded-sm border border-gray-300 bg-gray-500 px-4 py-2 text-sm font-medium text-white cursor-pointer" 
+                        >Cancel</button>
+                        <button @click="submitImport" :disabled="importing || !selectedFile"
+                        type="button"
+                        class="rounded-sm bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        {{ importing ? 'Importing...' : 'Import' }}
+                        </button>
+                    </div>
+                </div>
+             </div>
         </div>
     </div>
 </template>
