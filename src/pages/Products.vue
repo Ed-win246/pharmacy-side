@@ -182,7 +182,7 @@ const filterMedicines=computed(()=>{
         v-model="searchQuery"
         type="text"
         placeholder="Search Product..."
-        class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-sm focus:ring-2 focus:ring-green-500 outline-none"
+        class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-xs focus:ring-2 focus:ring-green-500 outline-none"
       />
       <button
         v-if="searchQuery"
