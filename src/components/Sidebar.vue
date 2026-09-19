@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X, Wallet,} from 'lucide-vue-next';
+import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X, Wallet, Folder} from 'lucide-vue-next';
 
 const props = defineProps({
     isOpen: {
@@ -63,39 +63,49 @@ const expensesItems=[
     {name:'Expense Items', route:'/expenseitems'}
 ];
 
-const salesItem=[
+const salesItems=[
     {name:'Add a sale',route:'/sellproduct'},
     {name:'View Sale', route:'/viewsales'},
     {name:'Customers', route:'/customers'}
-]
+];
 
 const othermenuItems = [
     { name: 'Reports', icon: BarChart3, route: '/reports' },
     // { name: 'System Settings', icon: Settings, route: '/settings' },
 ];
 
+
+
+
 const isMedicineActive = computed(() => {
     return medicinesubItems.some(item => route.path === item.route);
 });
-
 const isInventoryActive = computed(() => {
     return inventoryItems.some(item => route.path === item.route);
 });
 const isSettingsActive=computed(()=>{
     return settingsItems.some(item =>route.path === item.route);
  });
-
-
 const isExpenseActive= computed(()=>{
     return expensesItems.some(item => route.path === item.route);
- })
+ });
+ const isSalesActive=computed(()=>{
+    return salesItems.some(item=>route.path === item.route);
+ });
+
+
+
 
 onMounted(() => {
     if (isMedicineActive.value) medicineMenuOpen.value = true;
     if (isInventoryActive.value) inventoryMenuOpen.value = true;
     if(isSettingsActive.value) settingsMenuOpen.value=true;
     if(isExpenseActive.value) expensesMenuOpen.value=true;
+    if(isSalesActive.value) salesMenuOpen.value=true;
 });
+
+
+
 
 watch(() => route.path, (newPath) => {
     if (medicinesubItems.some(item => item.route === newPath)) {
@@ -110,7 +120,13 @@ watch(() => route.path, (newPath) => {
     if(expensesItems.some(item=>item.route === newPath)){
         expensesMenuOpen.value=true;
     }
+    if(salesItems.some(item=>item.route === newPath)){
+        salesMenuOpen.value=true;
+    }
 });
+
+
+
 
 function toggleMedicineMenu() {
     if (props.isCollapsed) {
@@ -120,7 +136,6 @@ function toggleMedicineMenu() {
         medicineMenuOpen.value = !medicineMenuOpen.value;
     }
 }
-
 function toggleinventoryMenu() {
     if (props.isCollapsed) {
         emit('toggleCollapse');
@@ -129,7 +144,6 @@ function toggleinventoryMenu() {
         inventoryMenuOpen.value = !inventoryMenuOpen.value;
     }
 }
-
 function togglesettingsMenu(){
     if(props.isCollapsed){
         emit('toggleCollapse');
@@ -138,7 +152,6 @@ function togglesettingsMenu(){
         settingsMenuOpen.value = !settingsMenuOpen.value;
     }
 }
-
 function toggleexpensesMenu(){
     if(props.isCollapsed){
         emit('toggleCollapse');
@@ -147,7 +160,13 @@ function toggleexpensesMenu(){
         expensesMenuOpen.value = !expensesMenuOpen.value;
     }
 }
-
+function togglesalesMenu(){
+    if(props.isCollapsed){
+        emit('toggleCollapse');
+    }else{
+        salesMenuOpen.value = !salesMenuOpen.value;
+    }
+}
 try {
     user.value = JSON.parse(localStorage.getItem('user') || 'null');
 } catch {
@@ -212,6 +231,57 @@ function logout() {
                 <component :is="item.icon" class="w-5 h-5 shrink-0 text-emerald-300" />
                 <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
             </router-link>
+            <!-- sales dropdrown-->
+            <div class="space-y-1">
+                <button
+                @click="togglesalesMenu"
+                type="button"
+                class="w-full flex items-center justify-between gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-800 group"
+                :class="[
+                    isCollapsed ? 'justify-between px-2 ': 'px-3.5',
+                    isSalesActive ? 'bg-green-800/90 text-white font-semibold': 'text-emarld-100 hover:bg-green-800/80 hover:text-white'
+                ]"
+                :title="isCollapsed? 'Sales': ''">
+                <span class="flex items-center gap-3 min-w-0" :class="{'justify-center': isCollapsed}">
+                    <Folder class="w-5 h-5 shrink-0 text-emerald-300"/>
+                    <span v-if="!isCollapsed" class="truncate">Sales</span>
+                </span>
+                <ChevronDown
+                v-if="!isCollapsed"
+                class="w-4 h-4 shrink-0 text-emerald-300/80 group-hover:text-white transition-transform duration-800 ease-in-out"
+                :class="{'rotate-180 text-white':salesMenuOpen}"/>
+                </button>
+                <Transition
+                    enter-active-class="transition-all duration-300 ease-in-out overflow-hidden"
+                    leave-active-class="transition-all duration-300 ease-in-out overflow-hidden"
+                    enter-from-class="opacity-0 max-h-0"
+                    enter-to-class="opacity-100 max-h-[500px]"
+                    leave-from-class="opacity-100 max-h-[500px]"
+                    leave-to-class="opacity-0 max-h-0"
+                >
+                    <div 
+                        v-show="salesMenuOpen" 
+                        :class="[
+                            isCollapsed ? 'space-y-1 py-1' : 'pl-4 pr-1 py-1 space-y-1 border-l-2 border-emerald-700/60 ml-5 mt-1'
+                        ]"
+                    >
+                        <router-link
+                            v-for="item in salesItems"
+                            :key="item.name"
+                            :to="item.route"
+                            class="flex items-center gap-2.5 py-2 rounded-md text-xs font-medium text-emerald-200/90 hover:bg-green-800/60 hover:text-white transition-colors duration-200"
+                            :class="[
+                                isCollapsed ? 'justify-center px-2' : 'px-3'
+                            ]"
+                            active-class="bg-emerald-600 text-white font-semibold shadow-xs"
+                            :title="isCollapsed ? item.name : ''"
+                        >
+                            <component :is="item.icon" class="w-4 h-4 shrink-0 text-emerald-300" />
+                            <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
+                        </router-link>
+                    </div>
+                </Transition>
+            </div>
 
             <!-- Medicine Dropdown -->
             <div class="space-y-1">
