@@ -1,8 +1,8 @@
 <script setup>
-import {ref, onMounted,reactive} from 'vue'
+import {ref, onMounted,reactive, computed} from 'vue'
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-import {X, Plus, Trash2, SquarePenIcon, LockKeyhole, Check, CheckCheckIcon} from 'lucide-vue-next';
+import {X, Plus, Trash2, SquarePenIcon, LockKeyhole, Check, CheckCheckIcon, CircleCheck, Search} from 'lucide-vue-next';
 
 
 const paymentOptions=ref([]);
@@ -11,12 +11,14 @@ const deleting=ref(false);
 const settingDefaultId = ref(null);
 const editingId=ref(null);
 const showModal=ref(false);
-const optionToDelete=ref(false);
+const optionToDelete=ref(null);
 const saving=ref(false);
 const isEditingForm=ref(false);
 const showDeleteModal=ref(false);
 const loggedUser=ref(null);
 
+//search state
+const searchQuery=ref('');
 
 try{
     loggedUser.value=JSON.parse(localStorage.getItem('user') || 'null');
@@ -97,7 +99,7 @@ function closeModal(){
 }
 
 function confirmDelete(payopt){
-    optionToDelete.value=payopt.name;
+    optionToDelete.value=payopt;
     showDeleteModal.value=true;
 }
 
@@ -143,6 +145,34 @@ async function saveOption(){
         saving.value=false;
     }
 }
+
+async function deletePayment(){
+    if(!optionToDelete.value) return;
+    deleting.value=true;
+
+    try{
+        await api.delete(`/paymentOptions/${optionToDelete.value.id}`);
+        paymentOptions.value=paymentOptions.value.filter(p =>p.id !== optionToDelete.value.id);
+        showDeleteModal.value=false;
+        optionToDelete.value=null;
+        toast.success('Payment option deleted successfully');
+    }catch(error){
+        console.error('Failed to delete payment option',error);
+        toast.error('Failed to delete payment option');
+    }finally{
+        deleting.value=false;
+    }
+}
+
+//search functionality
+const filteredPayments=computed(()=>{
+    const query=searchQuery.value.trim().toLocaleLowerCase();
+    if(!query) return paymentOptions.value;
+
+    return paymentOptions.value.filter(p=>
+                                        (p.name ?? '').toLocaleLowerCase().includes(query) || 
+                                        (p.account_number ?? '').toLocaleLowerCase().includes(query));
+});
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -157,6 +187,20 @@ async function saveOption(){
                             <span class="text-gray-400">/ Payment Options</span>
                         </h2>
                     </div>
+                </div>
+                <div class="relative flex-1 min-w-[180px] max-w-xs z-20">
+                    <Search class="absolute -translate-y-1/2 left-2.5 w-4 h-4 text-gray-400 top-1/2"/>
+                    <input type="text"
+                    v-model="searchQuery"
+                    placeholder="Seach payment options..."
+                    class="text-xs w-full border-gray-400 border rounded-sm pl-8 pr-3 py-1.5"
+                    >
+                    <button type="button"
+                    v-if="searchQuery"
+                    @click="searchQuery=''"
+                    class="right-2 absolute -translate-y-1/2 w-4 h-4 flex items-center text-gray-400 justify-center top-1/2">
+                    <x class="w-4 h-4 cursor-pointer"/>
+                    </button>
                 </div>
 
                 <div class="min-h-0 overflow-hidden flex-1">
@@ -181,10 +225,13 @@ async function saveOption(){
                                 <tr v-if="loading">
                                     <td class="px-4 py-14 text-center text-gray-600" colspan="6">Loading options</td>
                                 </tr>
-                                <tr v-else-if="paymentOptions.length === 0">
+                                <tr v-else-if="!paymentOptions.length">
                                     <td class="px-4 py-12 text-center text-gray-500" colspan="6">No Payment Options Found</td>
                                 </tr>
-                                <tr v-for="(pay, index) in paymentOptions" :key="pay.id" >
+                                <tr v-else-if="filteredPayments.length === 0">
+                                    <td colspan="5" class="px-4 py-12 text-center ">No Payment Options match "{{ searchQuery }}"</td>
+                                </tr>
+                                <tr v-for="(pay, index) in filteredPayments" :key="pay.id" >
                                     <td class="px-2 py-2 font-medium">{{ index +1  }}</td>
                                     <td class="px-2 py-2 font-medium">{{ pay.name }}</td>
                                     <td class="px-2 py-2 font-medium">{{ pay.account_number }}</td>
@@ -224,7 +271,7 @@ async function saveOption(){
                 </div>
 
                 <!--edit/register-->
-                <div v-if="showModal" class="inset-0 backdrop-blur-sm fixed bg-black/50 z-50 flex items-center justify-center p4">
+                <div v-if="showModal" class="inset-0 backdrop-blur-sm fixed bg-black/50 z-50 flex items-center justify-center p-4">
                     <div class="bg-white rounded-lg max-w-2xl overflow-y-auto max-h-[80vh] w-full shadow-sm">
                         <div class="flex items-center justify-between border-b border-gray-200 p-4 sm:p-6">
                             <h2 class="font-medium text-sm text-gray-600">
@@ -248,6 +295,28 @@ async function saveOption(){
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!--delete modal-->
+                <div v-if="showDeleteModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div class="max-w-2xl shadow-sm bg-white rounded-sm w-full p-6">
+                        <h2 class="font-medium text-lg">Delete Payment Option</h2>
+                        <p class="text-gray-400 mt-2 font-medium mb-4 text-sm">
+                            Are you sure, you want to delete <span class="font-bold text-gray-800">"{{ optionToDelete?.name }}"?</span>This cannot be undone.
+                        </p>
+                        <div class="flex justify-end gap-3">
+                            <button @click="cancelDelete"
+                            type="button" 
+                            class="rounded-sm bg-gray-500 border border-gray-500 px-4 py-2 text-sm text-white cursor-pointer"
+                            >Cancel</button>
+                            <button @click="deletePayment"
+                            type="button"
+                            :disabled="deleting"
+                            class="flex items-center justify-center gap-0 rounded-sm bg-red-600 px-4 py-2 text-sm text-white cursor-pointer">
+                            <CircleCheck class="w-4 h-4"/>  {{ deleting ? 'Deleting...' :'Yes' }}
+                            </button>
+                        </div>
                     </div>
                 </div>
           </div> 
