@@ -296,7 +296,7 @@ const filteredSuppliers=computed(()=>{
 <template>
     <div class="min-h-screen w-full">
         <div class="max-w-7xl h-full max-auto flex flex-col overflow-y-auto pb-10 p-2">
-            <div class="flex items-center justify-between  p-4">
+            <div class="flex items-center justify-between border-b border-gray-200 p-4">
                 <div>
                     <h2 class="font-medium text-sm flex items-center uppercase gap-2">System Suppliers</h2>
                 </div>
@@ -359,7 +359,7 @@ const filteredSuppliers=computed(()=>{
                             @click="searchQuery=''"
                             type="button"
                             aria-label="Clear Search"
-                            class="absolute right-2 -translate-1/2 justify-center top-1/2 flex items-center w-4 h-4 text-gray-400">
+                            class="absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center w-4 h-4 text-gray-400">
                             <X class="w-4 h-4 cursor-pointer"/>
                             </button>
                     </div>
@@ -380,8 +380,8 @@ const filteredSuppliers=computed(()=>{
                             <tr v-else-if="!suppliers.length">
                                 <td class="px-4 py-12 text-gray-400 text-center" colspan="5">No suppliers found</td>
                             </tr>
-                            <tr v-else-if="!filteredSuppliers.length" class="flex items-center justify-center mt-5">
-                                <td colspan="5" >No suppliers match "{{ searchQuery }}"</td>
+                            <tr v-else-if="filteredSuppliers.length === 0">
+                                <td colspan="5" class="px-4 py-12 text-center text-gray-500">No suppliers match "{{ searchQuery }}"</td>
                             </tr>
                             <tr v-for="(supp,index) in paginatedSuppliers" :key="supp.id">
                                 <td class="px-2 py-2 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
