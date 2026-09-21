@@ -296,7 +296,7 @@ const filteredSuppliers=computed(()=>{
 <template>
     <div class="min-h-screen w-full">
         <div class="max-w-7xl h-full max-auto flex flex-col overflow-y-auto pb-10 p-2">
-            <div class="flex items-center justify-between border-b border-gray-200 p-4">
+            <div class="flex items-center justify-between  p-4">
                 <div>
                     <h2 class="font-medium text-sm flex items-center uppercase gap-2">System Suppliers</h2>
                 </div>
@@ -488,8 +488,8 @@ const filteredSuppliers=computed(()=>{
 
             <!-- import modal-->
              <div v-if="showImportModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center p-4 justify-center">
-                <div class="max-w-md w-full bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <div class="flex items-center justify-between border-b border-gray-400 p-4 sm:p-6">
+                <div class="max-w-2xl w-full bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <div class="flex items-center justify-between p-4 sm:p-6">
                         <h2 class="font-medium text-sm text-gray-600">
                             Import Suppliers
                         </h2>
@@ -504,7 +504,7 @@ const filteredSuppliers=computed(()=>{
                         </div>
                         <button type="button"
                         @click="triggerFileSelect"
-                        class="px-3 py-1.5 bg-gray-200 rounded-md text-xs font-medium text-gray-700 cursor pointer">
+                        class="px-3 py-1.5 bg-gray-200 rounded-md text-xs font-medium text-gray-700 cursor-pointer">
                         Choose File
                         </button>
                         <input type="file"
@@ -516,11 +516,12 @@ const filteredSuppliers=computed(()=>{
                         class="mt-3 text-xs font-semibold text-green-600 truncate max-w-full">
                         Selected: {{ selectedFile.name }}</p>
                     </div>
-                    <div class="flex justify-end gap-3 border-t border-gray-300 pt-4">
+                    <div class="flex justify-end gap-3  border-gray-300 pt-4">
                         <button @click="closeImportModal"
                         type="button"
                         class="rounded-sm border border-gray-300 bg-gray-500 px-4 py-2 text-sm font-medium text-white cursor-pointer" 
-                        >Cancel</button>
+                        >Cancel
+                        </button>
                         <button @click="submitImport" :disabled="importing || !selectedFile"
                         type="button"
                         class="rounded-sm bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
