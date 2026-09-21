@@ -14,6 +14,7 @@ const categories = ref([]);
 const units = ref([]);
 const stockItems = ref([]);
 const suppliers=ref([]);
+const paymentOptions=ref([]);
 
 const form = reactive({
     category: '',
@@ -28,7 +29,7 @@ const form = reactive({
 const payment = reactive({
     amount_paid: '',
     supplier: '',
-    payment_option: '',
+    paymentOptions: '',
     pay_date: '',
 });
 
@@ -37,7 +38,7 @@ const totalAmount = computed(() => {
 });
 
 onMounted(async () => {
-    await Promise.all([fetchMedicines(), fetchCategories(), fetchUnits(), fetchSuppliers()]);
+    await Promise.all([fetchMedicines(), fetchCategories(), fetchUnits(), fetchSuppliers(),fetchpaymentOptions()]);
 });
 
 async function fetchMedicines() {
@@ -89,6 +90,19 @@ async function fetchUnits() {
         toast.error('Failed to load Product Units');
     } finally {
         loading.value = false;
+    }
+}
+
+async function fetchpaymentOptions(){
+    loading.value=true;
+    try{
+        const {data}= await api.get('/paymentOptions');
+        paymentOptions.value=data;
+    }catch(error){
+        console.error('FAiled to load payment options',error);
+        toast.error('Failed to load payment options');
+    }finally{
+        loading.value=false;
     }
 }
 
@@ -321,15 +335,16 @@ async function submitStockBatch() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="payment_option" class="block text-sm font-medium text-gray-700">Payment Option</label>
+                                    <label for="paymentOptions" class="block text-sm font-medium text-gray-700">Payment Option</label>
                                     <select
                                         id="payment_option"
-                                        v-model="payment.payment_option"
+                                        v-model="payment.paymentOptions"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     >
                                     <option value="" >select option</option>
-                                    <option value="">Cash</option>
-                                    <option value="">Visa</option>
+                                    <option v-for="payopt in paymentOptions" :key="payopt.name" :value="payopt.name">
+                                        {{ payopt.name }}
+                                    </option>
                                     </select>
                                 </div>
                                 <div>
