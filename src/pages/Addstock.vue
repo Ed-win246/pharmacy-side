@@ -4,12 +4,13 @@ import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import api from '@/lib/api';
 import { useStockStore } from '@/stores/stockStore';
-import { Plus, ListCheck, CircleCheck, PackageOpen, Trash2 } from 'lucide-vue-next';
+import {  ListCheck, CircleCheck, PackageOpen, Trash2 } from 'lucide-vue-next';
 import toast from '@tsirosgeorge/toastnotification';
 
 const router = useRouter();
-// const stockStore = useStockStore();
-// const { items: stockItems } = storeToRefs(stockStore);
+//exposing the items in the stockStore
+const stockStore = useStockStore();
+const {items : stockItems} = storeToRefs(stockStore);
 
 const loading = ref(false);
 const saving = ref(false);
@@ -110,7 +111,7 @@ async function fetchpaymentOptions() {
     }
 }
 
-function addItemToList() {
+async function addItemToList() {
     if (!form.category || !form.medicine || !form.unit || !form.buying_price || !form.quantity) {
         toast.error('Please fill in required fields: Category, Product, Unit, Price, Quantity');
         return;
@@ -140,12 +141,16 @@ function resetForm() {
     form.batch_number = '';
     form.expiry_date = '';
 }
-
+//remove one item fromt the list 
 function removeItem(index) {
     const item = stockItems.value[index];
     stockStore.removeItem(index);
-    stockItems.value.splice(index, 1);
     toast.info(`Removed ${item?.medicine || 'item'} from list`);
+}
+
+//clear items from the store
+function clearItems(){
+    stockStore.clearItems();
 }
 
 async function submitStockBatch() {
@@ -156,14 +161,16 @@ async function submitStockBatch() {
 
     saving.value = true;
     try {
-        await api.post('/addstock', {
-            items: stockItems.value,
+        await api.post('/stock-items/submit', {
+            items: stockItems.value.map((item) => ({
+                name: item.medicine,
+                quantity: Number(item.quantity),
+            })),
             payment: payment,
         });
         toast.success('Stock batch saved successfully!');
         stockStore.clearItems();
-        stockItems.value = [];
-        router.push('/viewstock');
+        // router.push('/viewstock');
     } catch (error) {
         console.error('Error saving stock batch:', error);
         toast.error('Failed to save stock batch. Please try again.');
@@ -193,7 +200,6 @@ async function submitStockBatch() {
                     <form @submit.prevent="addItemToList" class="space-y-4">
                         <div>
                             <label for="category" class="block text-sm font-medium text-gray-700">Category </label>
-                            <label for="category" class="block text-sm font-medium text-gray-700">Category *</label>
                             <select name="category" id="category" v-model="form.category" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                                 <option value="">Select option</option>
                                 <option v-for="categoryOption in categories" :key="categoryOption.id" :value="categoryOption.Category_name">
@@ -204,7 +210,6 @@ async function submitStockBatch() {
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="product" class="block text-sm font-medium text-gray-700">Product </label>
-                                <label for="product" class="block text-sm font-medium text-gray-700">Product *</label>
                                 <select id="product" v-model="form.medicine" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                                     <option value="">Select option</option>
                                     <option v-for="medicine in medicines" :key="medicine.id" :value="medicine.name">
@@ -214,7 +219,6 @@ async function submitStockBatch() {
                             </div>
                             <div>
                                 <label for="unit" class="block text-sm font-medium text-gray-700">Unit </label>
-                                <label for="unit" class="block text-sm font-medium text-gray-700">Unit *</label>
                                 <select id="unit" v-model="form.unit" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                                     <option value="" class="text-gray-400">Select option</option>
                                     <option v-for="unit in units" :key="unit.id" :value="unit.unit_name">
@@ -262,7 +266,7 @@ async function submitStockBatch() {
                                 <ListCheck class="w-4 h-4 text-green-600" />
                                 Added Stock Items ({{ stockItems.length }})
                             </h3>
-                            <button @click="stockStore.clearItems()" class="text-xs text-red-600 hover:underline cursor-pointer">Clear all</button>
+                            <button @click="clearItems" class="text-xs text-red-600 hover:underline cursor-pointer">Clear all</button>
                         </div>
                         <div class="overflow-x-4 max-h-[380px] ">
                             <table class="w-full text-left border-collapse text-sm overflow-auto">
