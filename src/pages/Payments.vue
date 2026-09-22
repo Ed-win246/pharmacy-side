@@ -251,7 +251,7 @@ const filteredPayments=computed(()=>{
                                     </td>
                                     <td class="px-2 py-2 font-medium">{{ pay.added_by_user?.name ?? '-' }}</td>
                                     <td class="px-2 py-2">
-                                        <div class="flex items-center gap-2">
+                                        <div class="flex items-center">
                                             <button
                                             @click="editPayment(pay)"
                                             class="flex items-center justify-center h-7 w-7 rounded-sm bg-green-600 text-white cursor-pointer hover:bg-green-700">
