@@ -44,7 +44,7 @@ watch(() => route.path, () => {
     />
 
     <!-- Main Content Area -->
-    <main class="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-gray-50">
+    <main class="flex h-screen min-w-0 flex-1 flex-col overflow-hidden bg-gray-100">
       <header class="hidden lg:flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 shrink-0">
         <div class="flex items-center gap-3">
           <button
