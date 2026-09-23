@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, reactive , computed } from 'vue';
-import { Plus, Pencil,SquarePenIcon ,Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next';
+import { Plus,SquarePenIcon ,Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 
@@ -14,10 +14,11 @@ const showDeleteModal = ref(false);
 const medicineToDelete = ref(null);
 const deleting = ref(false);
 const categories = ref([]);
+const units=ref([]);
 const searchQuery=ref('');
 
 onMounted(async () => {
-  await Promise.all([fetchMedicines(), fetchCategories()]);
+  await Promise.all([fetchMedicines(), fetchCategories(),fetchUnits()]);
 });
 
 async function fetchMedicines() {
@@ -44,16 +45,29 @@ async function fetchCategories() {
   }
 }
 
+async function fetchUnits() {
+  loading.value=true;
+  try {
+    const { data } = await api.get('/units');
+    units.value = data;
+  } catch (error) {
+    console.error('Error fetching product units', error);
+    toast.error('Failed to fetch product units. Please try again later.');
+  }
+}
+
 const form = reactive({
   name: '',
   genericName: '',
   category: '',
+  unit_name:'',
 });
 
 function resetForm() {
   form.name = '';
   form.genericName = '';
   form.category = '';
+  form.unit_name='';
 }
 
 function formatDateForInput(dateString) {
@@ -72,6 +86,7 @@ function editMedicine(medicine) {
   form.name = medicine.name || '';
   form.genericName = medicine.genericName || '';
   form.category = medicine.category || '';
+  form.unit_name = medicine.unit_name || medicine.unit?.unit_name || medicine.unit?.name || '';
   
   editingId.value = medicine.id;
   isEditingForm.value = true;
@@ -85,8 +100,8 @@ function closeModal() {
 }
 
 async function saveMedicine() {
-  if (!form.name ) {
-    alert('Please fill in required fields: Name');
+  if (!form.name || !form.unit_name) {
+    alert('Please fill in required fields: Name and Smallest unit');
     return;
   }
 
@@ -94,7 +109,8 @@ async function saveMedicine() {
     name: form.name,
     genericName: form.genericName || null,
     category: form.category || null,
-  };
+    unit_name: form.unit_name,
+    };
 
   saving.value = true;
   try {
@@ -113,7 +129,18 @@ async function saveMedicine() {
     closeModal();
   } catch (error) {
     console.error('Error saving medicine', error);
-    toast.error('Failed to save medicine. Please try again.');
+    console.error('Medicine validation response', error.response?.data);
+
+    const validationErrors = error.response?.data?.errors;
+    const firstValidationError = validationErrors
+      ? Object.values(validationErrors).flat()[0]
+      : null;
+
+    toast.error(
+      firstValidationError ||
+      error.response?.data?.message ||
+      'Failed to save medicine. Please try again.'
+    );
   } finally {
     saving.value = false;
   }
@@ -154,7 +181,7 @@ const filterMedicines=computed(()=>{
   }
   const query=searchQuery.value.toLowerCase();
   return medicines.value.filter(med =>
-    [med.name, med.genericName, med.category]
+    [med.name, med.genericName, med.category, med.unit_name, med.unit?.unit_name, med.unit?.name]
       .filter(Boolean)
       .some(value => value.toLowerCase().includes(query))
   );
@@ -202,6 +229,7 @@ const filterMedicines=computed(()=>{
               <th class="px-2 py-4 font-meduim">#</th>
               <th class="px-4 py-4 font-semibold">Medicine Name</th>
               <th class="px-4 py-4 font-semibold">Generic Name</th>
+              <th class="px-4 py-4 font-semibold">Smallest Unit</th>
               <th class="px-4 py-4 font-semibold">Category</th>
               <th class="px-4 py-4 font-semibold">Actions</th>
             </tr>
@@ -221,6 +249,12 @@ const filterMedicines=computed(()=>{
               <td class="px-2 py-2 font-medium">{{ index + 1 }}</td>
               <td class="px-2 py-2 font-semibold text-gray-900">{{ med.name }}</td>
               <td class="px-2 py-2 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
+              <td class="px-2 py-2">
+                 <span v-if="med.unit_name || med.unit?.unit_name || med.unit?.name" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                   {{ med.unit_name || med.unit?.unit_name || med.unit?.name }}
+                </span>
+                <span v-else class="text-gray-400">Not provided</span>
+              </td>
               <td class="px-2 py-2">
                 <span v-if="med.category" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                   {{ med.category }}
@@ -264,7 +298,7 @@ const filterMedicines=computed(()=>{
 
     <!-- Registration / Editing Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
           <h2 class="text-xl font-meduim text-gray-800">
             {{ isEditingForm ? 'Edit Product ' : 'New Product' }}
@@ -292,6 +326,15 @@ const filterMedicines=computed(()=>{
                 <option value="">Select category...</option>
                 <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
                   {{ cat.Category_name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Smallest unit</label>
+              <select v-model="form.unit_name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                <option value="">Select unit...</option>
+                <option v-for="u in units" :key="u.id" :value="u.unit_name">
+                  {{ u.unit_name  }}
                 </option>
               </select>
             </div>
