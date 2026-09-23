@@ -61,6 +61,9 @@ const form = reactive({
   genericName: '',
   category: '',
   unit_name:'',
+  min_quantity:'',
+  selling_price:'',
+  unit_details:[], // repeatable "pack unit" rows — captured here for a future page, not sent yet
 });
 
 function resetForm() {
@@ -68,6 +71,9 @@ function resetForm() {
   form.genericName = '';
   form.category = '';
   form.unit_name='';
+  form.min_quantity = '';
+  form.selling_price = '';
+  form.unit_details = [];
 }
 
 function formatDateForInput(dateString) {
@@ -87,7 +93,10 @@ function editMedicine(medicine) {
   form.genericName = medicine.genericName || '';
   form.category = medicine.category || '';
   form.unit_name = medicine.unit_name || medicine.unit?.unit_name || medicine.unit?.name || '';
-  
+  form.min_quantity = medicine.min_quantity || '';
+  form.selling_price = medicine.selling_price || '';
+  form.unit_details = medicine.unit_details ? [...medicine.unit_details] : [];
+
   editingId.value = medicine.id;
   isEditingForm.value = true;
   showModal.value = true;
@@ -99,12 +108,30 @@ function closeModal() {
   resetForm();
 }
 
+// Adds a new empty "pack unit" row: Unit, how many smallest-units it
+// contains, and its own selling price.
+function addUnitRow() {
+  form.unit_details.push({
+    unit_id: '',
+    quantity: '',
+    selling_price: '',
+  });
+}
+
+function removeUnitRow(index) {
+  form.unit_details.splice(index, 1);
+}
+
 async function saveMedicine() {
   if (!form.name || !form.unit_name) {
     alert('Please fill in required fields: Name and Smallest unit');
     return;
   }
 
+  // Products page only saves these four fields for now. min_quantity,
+  // selling_price and unit_details are captured in the form/UI already,
+  // but intentionally left out of this payload — they'll be sent from a
+  // separate page once the matching backend endpoints exist.
   const payload = {
     name: form.name,
     genericName: form.genericName || null,
@@ -319,25 +346,98 @@ const filterMedicines=computed(()=>{
               <label class="block text-xs font-semibold text-gray-700 mb-1">Generic Name</label>
               <input v-model="form.genericName" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. Amoxicillin" />
             </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Category</label>
+                <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                  <option value="">Select category...</option>
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
+                    {{ cat.Category_name }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Smallest unit</label>
+                <select v-model="form.unit_name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                  <option value="">Select unit...</option>
+                  <option v-for="u in units" :key="u.id" :value="u.unit_name">
+                    {{ u.unit_name  }}
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Min Quantity</label>
+                <input v-model="form.min_quantity" type="number" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Selling Price</label>
+                <input v-model="form.selling_price" type="number" min="0" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" />
+              </div>
+            </div>
 
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Category</label>
-              <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                <option value="">Select category...</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
-                  {{ cat.Category_name }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Smallest unit</label>
-              <select v-model="form.unit_name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                <option value="">Select unit...</option>
-                <option v-for="u in units" :key="u.id" :value="u.unit_name">
-                  {{ u.unit_name  }}
-                </option>
-              </select>
-            </div>
+            <!-- Pack / selling units: e.g. "1 Box contains 25 Tablets" at its own price -->
+            <div class="border-t border-gray-200 pt-4">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Selling Units</h3>
+                <button
+                  type="button"
+                  @click="addUnitRow"
+                  class="flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 cursor-pointer"
+                >
+                  <Plus class="w-3.5 h-3.5" /> Add Unit
+                </button>
+              </div>
+
+              <p v-if="form.unit_details.length === 0" class="text-xs text-gray-400 italic">
+                No selling units added yet. Click "Add Unit" if this product is also sold in packs (e.g. a Box of 25 Tablets).
+              </p>
+
+              <div v-for="(row, rIndex) in form.unit_details" :key="rIndex" class="grid grid-cols-12 gap-2 items-end mb-3">
+                <div class="col-span-4">
+                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">Unit</label>
+                  <select v-model="row.unit_id" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none">
+                    <option value="">Select unit...</option>
+                    <option v-for="u in units" :key="u.id" :value="u.id">
+                      {{ u.unit_name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-span-3">
+                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">
+                    Contains ({{ form.unit_name || 'smallest unit' }})
+                  </label>
+                  <input
+                    v-model.number="row.quantity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 25"
+                    class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+                <div class="col-span-4">
+                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">Selling Price</label>
+                  <input
+                    v-model.number="row.selling_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none"
+                  />
+                </div>
+                <div class="col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    @click="removeUnitRow(rIndex)"
+                    :aria-label="`Remove unit row ${rIndex + 1}`"
+                    class="flex h-8 w-8 items-center justify-center rounded-md bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
             <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50">
