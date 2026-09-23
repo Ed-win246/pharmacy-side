@@ -1,8 +1,14 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,computed } from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
+import { Search , X} from 'lucide-vue-next';
 
+
+onMounted(fetchPostedStock);
+
+
+const searchQuery=ref('');
 const stockItems = ref([]);
 const loading = ref(false);
 
@@ -15,7 +21,6 @@ async function fetchPostedStock() {
                 status: 'posted',
             },
         });
-
         stockItems.value = data;
     } catch (error) {
         console.error('Failed to load posted stock', error);
@@ -25,7 +30,18 @@ async function fetchPostedStock() {
     }
 }
 
-onMounted(fetchPostedStock);
+const filteredStock = computed(() => {
+    const query = searchQuery.value.trim().toLowerCase();
+    if (!query) return stockItems.value;
+
+    return stockItems.value.filter((item) => {
+        const name = String(item.name ?? item.medicine_name ?? item.medicine ?? '').toLowerCase();
+        const quantity = String(item.quantity ?? '').toLowerCase();
+
+        return name.includes(query) || quantity.includes(query);
+    });
+});
+
 </script>
 <template>
     <div class="min-h-screen w-full ">
@@ -40,14 +56,18 @@ onMounted(fetchPostedStock);
                     </div>
             </div>
 
-            <div v-if="loading" class="p-4 text-sm text-gray-500">
-                Loading stock...
+            <div class="relative mx-auto mb-4 w-full max-w-xs">
+                <Search class="absolute top-1/2 -translate-y-1/2 left-2.5 w-4 h-4 text-gray-400"/>
+                <input type="text"
+                v-model="searchQuery"
+                placeholder="Search stock.."
+                class="text-xs w-full border-gray-400 border rounded-sm pl-8 pr-3 py-1.5">
+                <button type="button"
+                v-if="searchQuery"
+                @click="searchQuery=''"
+                class="right-2 absolute -translate-y-1/2 w-4 h-4 flex items-center text-gray-400 justify-center top-1/2">
+                <X class="w-4 h-4"/></button>
             </div>
-
-            <div v-else-if="stockItems.length === 0" class="p-4 text-sm text-gray-500">
-                No submitted stock found.
-            </div>
-
             <div class="min-h-0 overflow-hidden flex-1 bg-white">
                 <div class="h-full w-full overflow-auto">
                     <table class="w-full min-w-[560px] divide-y divide-slate-200 mt-2 text-left text-sm ">
@@ -59,9 +79,18 @@ onMounted(fetchPostedStock);
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
-                            <tr v-for="(item, index) in stockItems" :key="item.id">
+                            <tr v-if="loading">
+                                <td  class="px-4 py-12 text-center text-gray-500" colspan="6">Loading Stock...</td>
+                            </tr>
+                            <tr v-else-if="!stockItems.length">
+                                <td  class="px-4 py-12 text-center text-gray-500" colspan="6">No submitted stock found</td>
+                            </tr>
+                            <tr v-else-if="filteredStock.length === 0">
+                                  <td  class="px-4 py-12 text-center text-gray-500" colspan="6">No search match "{{ searchQuery }}"?</td>
+                            </tr>
+                            <tr v-for="(item, index) in filteredStock" :key="item.id">
                                 <td class="px-2 py-2">{{ index + 1 }}</td>
-                                <td class="px-2 py-2">{{ item.name}}</td>
+                                <td class="px-2 py-2">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
                                 <td class="px-2 py-2">{{ item.quantity }}</td>
                             </tr>
                         </tbody>
