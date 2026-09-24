@@ -5,7 +5,6 @@ import DashboardLayout from '@/layouts/DashboardLayout.vue';
 import Products from '@/pages/Products.vue';
 import Categories from "@/pages/Categories.vue";
 import Units from "@/pages/Units.vue";
-import Reports from '@/pages/Reports.vue';
 import Settings from '@/pages/Settings.vue';
 import Register from '@/pages/Register.vue';
 import ViewStock from "@/pages/ViewStock.vue";
@@ -56,7 +55,6 @@ const routes = [
             {path:'reconcilestock',name:'reconcilestock',component: ReconcileStock},
             {path:'expiredstock',name:'expiredstock',component: ExpiredStock},
             {path:'suppliers', name:'suppliers', component: Suppliers},
-            { path: 'reports', name: 'reports', component: Reports },
             { path: 'settings', name: 'settings', component: Settings },
             {path:'paymentoptions',name:'paymentoptions',component: Payments},
             {path:'users', name:'systemsusers', component:SystemUsers},
