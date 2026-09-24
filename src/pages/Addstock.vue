@@ -114,7 +114,7 @@ async function fetchpaymentOptions() {
 //function to search specific categories to a prdouct.
 const filteredMedicines=computed(()=>{
     if(!form.category) {
-        return medicines.value;
+        return medicines.value;//show everything if no category is choosen.
     }
     return medicines.value.filter(m =>m.category === form.category);
 });
