@@ -69,13 +69,6 @@ const salesItems=[
     {name:'Customers', route:'/customers'}
 ];
 
-const othermenuItems = [
-    { name: 'Reports', icon: BarChart3, route: '/reports' },
-    // { name: 'System Settings', icon: Settings, route: '/settings' },
-];
-
-
-
 
 const isMedicineActive = computed(() => {
     return medicinesubItems.some(item => route.path === item.route);
@@ -393,21 +386,6 @@ function logout() {
                 </Transition>
             </div>
 
-            <!-- Other Menu Items -->
-            <router-link
-                v-for="item in othermenuItems"
-                :key="item.name"
-                :to="item.route"
-                class="flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium text-green-100 hover:bg-green-800/80 hover:text-white transition-colors duration-200"
-                :class="[
-                    isCollapsed ? 'justify-center px-2' : 'px-3.5'
-                ]"
-                active-class="bg-emerald-600 text-white font-semibold shadow-xs"
-                :title="isCollapsed ? item.name : ''"
-            >
-                <component :is="item.icon" class="w-5 h-5 shrink-0 text-emerald-300" />
-                <span v-if="!isCollapsed" class="truncate">{{ item.name }}</span>
-            </router-link>
 
             <!-- Expenses Dropdown -->
             <div class="space-y-1">
