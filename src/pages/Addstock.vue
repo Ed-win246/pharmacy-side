@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onMounted, reactive, ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import api from '@/lib/api';
@@ -111,6 +111,20 @@ async function fetchpaymentOptions() {
     }
 }
 
+//function to search specific categories to a prdouct.
+const filteredMedicines=computed(()=>{
+    if(!form.category) {
+        return medicines.value;
+    }
+    return medicines.value.filter(m =>m.category === form.category);
+});
+//watch the category and product
+watch(()=>form.category, ()=>{
+    form.medicine='';
+});
+
+
+
 async function addItemToList() {
     if (!form.category || !form.medicine || !form.unit || !form.buying_price || !form.quantity) {
         toast.error('Please fill in required fields: Category, Product, Unit, Price, Quantity');
@@ -212,7 +226,10 @@ async function submitStockBatch() {
                                 <label for="product" class="block text-sm font-medium text-gray-700">Product </label>
                                 <select id="product" v-model="form.medicine" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                                     <option value="">Select option</option>
-                                    <option v-for="medicine in medicines" :key="medicine.id" :value="medicine.name">
+                                    <option v-if="form.category && filteredMedicines.length === 0" value="" disabled>
+                                        List is empty..
+                                    </option>
+                                    <option v-for="medicine in filteredMedicines" :key="medicine.id" :value="medicine.name">
                                         {{ medicine.name }}
                                     </option>
                                 </select>
