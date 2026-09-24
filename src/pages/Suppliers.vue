@@ -487,9 +487,9 @@ const filteredSuppliers=computed(()=>{
             </div>
 
             <!-- import modal-->
-             <div v-if="showImportModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center p-4 justify-center">
+             <div v-if="showImportModal" class="fixed inset-0 backdrop-blur-sm bg-black/50 z-50 flex items-center  justify-center">
                 <div class="max-w-2xl w-full bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                    <div class="flex items-center justify-between p-4 sm:p-6">
+                    <div class="flex items-center justify-between p-4">
                         <h2 class="font-medium text-sm text-gray-600">
                             Import Suppliers
                         </h2>
@@ -501,20 +501,20 @@ const filteredSuppliers=computed(()=>{
                         <div class="flex flex-col items-center justify-center border-2 border-gray-400 rounded-lg p-6">
                             <UploadIcon class="w-4 h-4"/>
                             <p class="text-xs text-gray-600 mb-2">Select an EXcel(.xlsx, xls) or CSV file</p>
+                            <input type="file"
+                            ref="fileInput"
+                            accept=".xlsx, .xls,.CSV"
+                            class="hidden"
+                            @change="handleFileSelected">
+                            <p v-if="selectedFile" 
+                            class="mt-3 text-xs font-semibold text-green-600 truncate max-w-full">
+                            Selected: {{ selectedFile.name }}</p>
                         </div>
                         <button type="button"
                         @click="triggerFileSelect"
                         class="px-3 py-1.5 bg-gray-200 rounded-md text-xs font-medium text-gray-700 cursor-pointer">
                         Choose File
                         </button>
-                        <input type="file"
-                        ref="fileInput"
-                        accept=".xlsx, .xls,.CSV"
-                        class="hidden"
-                        @change="handleFileSelected">
-                        <p v-if="selectedFile" 
-                        class="mt-3 text-xs font-semibold text-green-600 truncate max-w-full">
-                        Selected: {{ selectedFile.name }}</p>
                     </div>
                     <div class="flex justify-end gap-3  border-gray-300 pt-4">
                         <button @click="closeImportModal"
