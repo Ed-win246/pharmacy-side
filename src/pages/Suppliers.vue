@@ -3,8 +3,12 @@ import {ref, reactive, onMounted, computed, watch} from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { CircleCheck,  Download,  Plus, SquarePenIcon, Trash2, Upload, X , Search, UploadIcon} from 'lucide-vue-next';
+import { useSuppliersStore } from '@/stores/suppliersStore';
 
-const suppliers=ref([]);
+const supplierStore=useSuppliersStore();
+const suppliers=computed(()=>supplierStore.suppliers || []);
+//const suppliers=ref([]);
+
 const loading=ref(false);
 const showModal=ref(false);
 const editingId=ref(null);
@@ -84,17 +88,24 @@ onMounted(async()=>{
 });
 
 async function fetchSuppliers(){
-    loading.value=true;
+    if(!supplierStore.suppliers || supplierStore.suppliers.length === 0){
+        loading.value=true;
+    }
+
     try{
-        const {data}=await api.get('/suppliers');
-        suppliers.value=data.map(supplier => ({
+        const { data } = await api.get('/suppliers');
+        const list = Array.isArray(data) ? data : (data?.suppliers || data?.data || []);
+        const formattedData = list.map(supplier => ({
             ...supplier,
             contact: String(supplier.contact ?? ''),
         }));
+        supplierStore.setSuppliers(formattedData);
     }
     catch(error){
-        console.error('Failed to fetch system suppliers',error);
-        toast.error('Failed to fetch System suppliers. Please try again.')
+        console.error('Failed to fetch system suppliers', error);
+        if(!supplierStore.suppliers || supplierStore.suppliers.length === 0){
+            toast.error('Failed to fetch System suppliers. Please check your backend connection.');
+        }
     }finally{
         loading.value=false;
     }
@@ -151,7 +162,7 @@ async function deleteSupplier(){
 
     try{
         await api.delete(`/suppliers/${supplierToDelete.value.id}`);
-        suppliers.value=suppliers.value.filter(s => s.id !== supplierToDelete.value.id);
+        supplierStore.suppliers=supplierStore.suppliers.filter(s => s.id !== supplierToDelete.value.id);
         showDeleteModal.value=false;
         supplierToDelete.value=null;
         toast.success('System Supplier deleted Successfully');
@@ -178,14 +189,14 @@ async function saveSupplier(){
     try{    
         if(isEditingForm.value){
             const {data}= await api.put(`/suppliers/${editingId.value}`,payload);
-            const index= suppliers.value.findIndex(s=>s.id===editingId.value);
+            const index= supplierStore.suppliers.findIndex(s=>s.id===editingId.value);
             if(index!==-1){
-                suppliers.value[index]=data;
+                supplierStore.suppliers[index]=data;
             }
             toast.success('System supplier updated successfully');
         }else{
             const {data}= await api.post('/suppliers',payload);
-            suppliers.value.unshift(data);
+            supplierStore.suppliers.unshift(data);
             toast.success('System Supplier registered successfully');
         }
         closeModal();
@@ -327,7 +338,7 @@ const filteredSuppliers=computed(()=>{
                         <button @click="openImportModal" type="button" :disabled="importing"
                             class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer">
                             {{ importing ? 'Importing...' : 'Import suppliers' }}
-                            <Upload class="w-4 h-4"/>
+                            <Download class="w-4 h-4"/>
                         </button>
                          </div>
 
@@ -335,7 +346,7 @@ const filteredSuppliers=computed(()=>{
                         <button @click="exportSuppliers" type="button"
                             class="mt-2 flex items-center gap-2 rounded-sm border border-gray-300 px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 cursor-pointer">
                             Export
-                            <Download class="h-4 w-4" />
+                            <upload class="h-4 w-4" />
                         </button>
                         </div>
                         <div class="flex items-center justify-center gap-2">
@@ -374,10 +385,10 @@ const filteredSuppliers=computed(()=>{
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
-                            <tr v-if="loading">
+                            <!-- <tr v-if="loading">
                                 <td class="px-4 py-12 text-gray-400 text-center" colspan="5">Loading Suppliers</td>
-                            </tr>
-                            <tr v-else-if="!suppliers.length">
+                            </tr> -->
+                            <tr v-if="!suppliers.length">
                                 <td class="px-4 py-12 text-gray-400 text-center" colspan="5">No suppliers found</td>
                             </tr>
                             <tr v-else-if="filteredSuppliers.length === 0">
