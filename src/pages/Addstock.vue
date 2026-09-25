@@ -1,13 +1,12 @@
 <script setup>
-import { onMounted, reactive, ref, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, reactive, ref, computed, watch, } from 'vue';
 import { storeToRefs } from 'pinia';
 import api from '@/lib/api';
 import { useStockStore } from '@/stores/stockStore';
 import {  ListCheck, CircleCheck, PackageOpen, Trash2 } from 'lucide-vue-next';
 import toast from '@tsirosgeorge/toastnotification';
 
-const router = useRouter();
+
 //exposing the items in the stockStore
 const stockStore = useStockStore();
 const {items : stockItems} = storeToRefs(stockStore);
@@ -20,6 +19,18 @@ const categories = ref([]);
 const units = ref([]);
 const suppliers = ref([]);
 const paymentOptions = ref([]);
+
+
+//paydate from today onwadays
+function formatLocalDate(date){
+    const year= date.getFullYear();
+    const month=String(date.getMonth()+1).padStart(2,'0');
+    const day=String(date.getDate()).padStart(2,'0');
+
+    return `${year}-${month}-${day}`;
+}
+const today=computed(()=>formatLocalDate(new Date()));
+
 
 const form = reactive({
     category: '',
@@ -35,7 +46,7 @@ const payment = reactive({
     amount_paid: '',
     supplier: '',
     paymentOptions: '',
-    pay_date: '',
+    pay_date: today.value,
 });
 
 const totalAmount = computed(() => {
@@ -126,8 +137,14 @@ watch(()=>form.category, ()=>{
 
 
 async function addItemToList() {
-    if (!form.category || !form.medicine || !form.unit || !form.buying_price || !form.quantity) {
+    const buying_price= Number(form.buying_price);
+    const quantity= Number(form.quantity);
+    if (!form.category || !form.medicine || !form.unit || !Number.isFinite(buying_price)|| buying_price <0 || !Number.isInteger(quantity) || quantity <1) {
         toast.error('Please fill in required fields: Category, Product, Unit, Price, Quantity');
+        return;
+    }
+    if (isPastDate(form.expiry_date)) {//date functionality error log
+        toast.error('Expiry date must be after today');
         return;
     }
 
@@ -171,6 +188,14 @@ async function submitStockBatch() {
     if (stockItems.value.length === 0) {
         toast.error('No stock items to submit');
         return;
+    }//update the validate 
+    if(!payment.supplier){
+        toast.error('Please select a supplier');
+        return;
+    }
+    if(!payment.paymentOptions){
+        toast.error('Please select payment option');
+        return;
     }
 
     saving.value = true;
@@ -184,7 +209,6 @@ async function submitStockBatch() {
         });
         toast.success('Stock batch saved successfully!');
         stockStore.clearItems();
-        // router.push('/viewstock');
     } catch (error) {
         console.error('Error saving stock batch:', error);
         toast.error('Failed to save stock batch. Please try again.');
@@ -192,6 +216,41 @@ async function submitStockBatch() {
         saving.value = false;
     }
 }
+//date functionality
+const tomorrow =computed(()=>{
+    const date =new Date();
+    date.setDate(date.getDate() + 1);
+
+    const year=date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2,'0');
+    const day = String(date.getDate()).padStart(2 , '0');
+
+    return `${year}-${month}-${day}`;
+    
+});
+function isPastDate(dateValue){
+    if(!dateValue){
+        return true;
+    }
+    return dateValue <tomorrow.value;
+}
+
+const canSubmitBatch=computed(()=>{
+    return(
+        stockItems.value.length >0 &&
+        Boolean(payment.supplier) &&
+        Boolean(payment.paymentOptions)&&
+        !saving.value
+    );
+});
+
+
+
+// const tomorrow=computed(()=>{
+//     const date= new Date();
+//     date.setDate(date.getDate() +1);
+    
+// })
 </script>
 <template>
     <div class="w-full min-h-screen">
@@ -246,11 +305,11 @@ async function submitStockBatch() {
                         </div>
                         <div>
                             <label for="total-product-price" class="block text-sm font-medium text-gray-700">Total Buying Price </label>
-                            <input id="total-product-price" v-model="form.buying_price" type="number" step="0.01" placeholder="0.00" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <input id="total-product-price" v-model="form.buying_price" type="number" step="1" min="1" placeholder="1" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" required>
                         </div>
                         <div class="border-b-2 border-gray-200 pb-4">
                             <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity </label>
-                            <input id="quantity" v-model="form.quantity" type="number" min="1" placeholder="1" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                            <input id="quantity" v-model.number="form.quantity" type="number" min="1" placeholder="1" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
@@ -259,7 +318,7 @@ async function submitStockBatch() {
                             </div>
                             <div>
                                 <label for="expiry-date" class="block text-sm font-medium text-gray-700">Expiry Date</label>
-                                <input id="expiry-date" v-model="form.expiry_date" type="date" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                                <input id="expiry-date" v-model="form.expiry_date" type="date" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" :min="tomorrow ">
                             </div>
                         </div>
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 rounded-sm items-center justify-center flex gap-2 px-4 py-2 text-white font-medium cursor-pointer transition">
@@ -345,8 +404,9 @@ async function submitStockBatch() {
                                         id="amount_paid"
                                         v-model="payment.amount_paid"
                                         type="number"
-                                        step="0.01"
-                                        placeholder="0.00"
+                                        min="1"
+                                        step="1"
+                                        placeholder="0"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     />
                                 </div>
@@ -383,13 +443,14 @@ async function submitStockBatch() {
                                         id="pay-date"
                                         v-model="payment.pay_date"
                                         type="date"
+                                        :min="today"
                                         class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     />
                                 </div>
                                 <div>
                                     <button
                                     @click="submitStockBatch"
-                                    :disabled="saving"
+                                    :disabled="!canSubmitBatch"
                                     class="w-full mt-6 flex items-center justify-center gap-2 rounded-sm bg-green-600 px-4 py-2 whitespace-nowrap text-sm font-medium text-white transition hover:bg-green-700 disabled:opacity-50 cursor-pointer"
                                     >
                                     <CircleCheck class="h-4 w-4 shrink-0 " aria-hidden="true" />
