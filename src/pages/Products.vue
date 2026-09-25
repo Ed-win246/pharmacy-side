@@ -3,8 +3,13 @@ import { onMounted, ref, reactive , computed } from 'vue';
 import { Plus,SquarePenIcon ,Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
+import { useProductStore } from '@/stores/productStore';
 
-const medicines = ref([]);
+
+const productStore=useProductStore();
+
+// const medicines = ref([]); updated medicines 
+const medicines=computed(()=>productStore.products || []);
 const showModal = ref(false);
 const editingId = ref(null);
 const isEditingForm = ref(false);
@@ -22,10 +27,12 @@ onMounted(async () => {
 });
 
 async function fetchMedicines() {
-  loading.value = true;
+  if (!productStore.products || productStore.products.length === 0) {
+    loading.value = true;
+  }
   try {
     const { data } = await api.get('/medicines');
-    medicines.value = data;
+    productStore.setProducts(data);//changed
   } catch (error) {
     console.error('Error fetching medicines', error);
     toast.error('Failed to fetch medicines. Please try again later.');
@@ -35,7 +42,7 @@ async function fetchMedicines() {
 }
 
 async function fetchCategories() {
-  loading.value=true;
+  // loading.value=true;
   try {
     const { data } = await api.get('/categories');
     categories.value = data;
@@ -46,7 +53,7 @@ async function fetchCategories() {
 }
 
 async function fetchUnits() {
-  loading.value=true;
+  // loading.value=true;
   try {
     const { data } = await api.get('/units');
     units.value = data;
@@ -137,14 +144,14 @@ async function saveMedicine() {
   try {
     if (isEditingForm.value) {
       const { data } = await api.put(`/medicines/${editingId.value}`, payload);
-      const index = medicines.value.findIndex(m => m.id === editingId.value);
+      const index = productStore.products.findIndex(m => m.id === editingId.value);//changed this line from medicines.value.findIndex
       if (index !== -1) {
-        medicines.value[index] = data;
+        productStore.products[index] = data;//changed this medicines.value
       }
       toast.success('Medicine updated successfully!');
     } else {
       const { data } = await api.post('/medicines', payload);
-      medicines.value.unshift(data);
+      productStore.products.unshift(data);//changed this line as well
       toast.success('Medicine registered successfully!');
     }
     closeModal();
@@ -183,8 +190,9 @@ async function deleteMedicine() {
   if (!medicineToDelete.value) return;
   deleting.value = true;
   try {
+    //filter products directly on the pinia store
     await api.delete(`/medicines/${medicineToDelete.value.id}`);
-    medicines.value = medicines.value.filter(m => m.id !== medicineToDelete.value.id);
+    productStore.products =productStore.products.filter(m => m.id !== medicineToDelete.value.id);
     toast.success('Medicine deleted successfully!');
     showDeleteModal.value = false;
     medicineToDelete.value = null;
@@ -256,12 +264,12 @@ const filterMedicines=computed(()=>{
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr v-if="loading">
+            <!-- <tr v-if="loading">
               <td class="px-5 py-12 text-center text-gray-500" colspan="5">
                 Loading Products...
               </td>
-            </tr>
-            <tr v-else-if="filterMedicines.length === 0">
+            </tr> -->
+            <tr v-if="filterMedicines.length === 0">
               <td class="px-5 py-12 text-center text-gray-500" colspan="5">
                 {{ searchQuery ? 'No products match your search':'No products available' }}
               </td>
