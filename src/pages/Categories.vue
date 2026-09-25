@@ -3,9 +3,12 @@ import { onMounted, reactive, ref , computed } from 'vue';
 import { Plus, Trash2, X, SquarePenIcon, CircleCheckIcon , Search} from 'lucide-vue-next';
 import toast from '@tsirosgeorge/toastnotification';
 import api from '@/lib/api';
+import { useCategoryStore } from '@/stores/categoryStore';
 
+const categoryStore=useCategoryStore();
+//const categories = ref([]);
+const categories=computed(()=>categoryStore.categories || []);
 
-const categories = ref([]);
 const loading = ref(true);
 const saving = ref(false);
 const showModal = ref(false);
@@ -39,10 +42,12 @@ onMounted(async()=>{
 });
 
 async function fetchCategories(){
-    loading.value=true;
+    if(!categoryStore.categories || categoryStore.categories.length ===0){
+        loading.value=true;
+    }
     try{
         const {data} = await api.get('/categories');
-        categories.value=data;
+        categoryStore.setCategories(data);
     }catch(error){
         console.error('Error fecthing categories', error);
         toast.error('Failed to fetch categories. Please try again later');
@@ -95,7 +100,7 @@ async function deleteCategory(){
     deleting.value=true;
     try{
         await api.delete(`/categories/${categoryToDelete.value.id}`);
-        categories.value= categories.value.filter(c =>c.id !==categoryToDelete.value.id);
+        categoryStore.categories= categoryStore.categories.filter(c =>c.id !==categoryToDelete.value.id);
         showDeleteModal.value=false;
         categoryToDelete.value=null;
         toast.success('Product category deleted successfully');
@@ -137,14 +142,14 @@ async function saveCategory(){
     try{
         if(isEditingForm.value){
             const {data}= await api.put(`/categories/${editingId.value}`,payload);
-            const index = categories.value.findIndex(c => c.id===editingId.value);
+            const index = categoryStore.categories.findIndex(c => c.id===editingId.value);
             if(index !==-1){
-                categories.value[index]=data;
+                categoryStore.categories[index]=data;
             }
             toast.success('Product Category updated successfully');
         }else{
             const{data}= await api.post('/categories',payload);
-            categories.value.unshift(data);
+            categoryStore.categories.unshift(data);
             toast.success('Product Category registered successfully');
         }
         closeModal();
@@ -202,14 +207,14 @@ async function saveCategory(){
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-if="loading">
+                        <!-- <tr v-if="loading">
                             <td class="py-12 px-6 text-center text-gray-500" colspan="5">
                                 No Product Category Data Found...
                             </td>
-                        </tr>
-                        <tr v-else-if="filterCategories.length===0">
+                        </tr> -->
+                        <tr v-if="filterCategories.length===0">
                             <td class="px-6 py-12 text-center text-gray-500" colspan="5">
-                               {{ searchQuery ? 'No product category matches your search':'No product categorry found' }}
+                               {{ searchQuery ? 'No product category matches your search':'No product category found' }}
                             </td>
                         </tr>
                         <tr v-for="(cat,index) in filterCategories" :key="cat.id">
