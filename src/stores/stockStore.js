@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-
 const STORAGE_KEY = 'pharmacy-stock-items';
+
 
 function loadItems() {
     try {
@@ -14,6 +14,7 @@ function loadItems() {
 function saveItems(items) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
+
 
 export const useStockStore = defineStore('stockStore', {
     state: () => ({
