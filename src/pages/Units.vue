@@ -3,8 +3,12 @@ import {ref, onMounted, reactive, computed} from 'vue';
 import { Trash2, Search, SquarePenIcon, X, Plus, CircleCheckIcon } from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
+import { useUnitStore } from '@/stores/unitStore';
 
-const units=ref([]);
+const unitStore =useUnitStore();
+
+//const units=ref([]);
+const units=computed(()=>unitStore.units || []);
 const showModal=ref(false);
 const loading=ref(false);
 const editingId=ref(null);
@@ -39,10 +43,12 @@ onMounted(async()=>{
 });
 
 async function fetchUnits(){
-    loading.value=true
+    if (!unitStore.units || unitStore.units.length === 0) {
+        loading.value = true;
+    }
     try{
         const {data}= await api.get('/units');
-        units.value=data;
+        unitStore.setUnits(data);
     }catch(error){
         console.error('Error fecthing product Units',error);
         toast.error('Error fetching product units');
@@ -96,7 +102,7 @@ async function deleteUnit(){
 
     try{
         await api.delete(`/units/${unitToDelete.value.id}`);
-        units.value= units.value.filter(u =>u.id !==unitToDelete.value.id);
+        unitStore.removeUnit(unitToDelete.value.id);
         showDeleteModal.value=false;
         unitToDelete.value=null;
         toast.success('Product Unit deleted successfully');
@@ -138,14 +144,14 @@ async function saveUnit(){
     try{
         if(isEditingForm.value){
             const {data}= await api.put(`/units/${editingId.value}`,payload);
-            const index = units.value.findIndex(u=>u.id===editingId.value);
+            const index = unitStore.units.findIndex(u=>u.id===editingId.value);
             if(index !==-1){
-                units.value[index]=data;
+                unitStore.units[index]=data;
             }
             toast.success('Product Unit updated successfully');
         }else{
             const {data}= await api.post('/units', payload);
-            units.value.unshift(data);
+            unitStore.units.unshift(data);
             toast.success('Product Unit registered successfully');
         }
         closeModal();
@@ -203,12 +209,12 @@ async function saveUnit(){
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        <tr v-if="loading">
+                        <!-- <tr v-if="loading">
                             <td class="px-4 py-12 text-center text-gray-400" colspan="5">
                                 Loading product units...
                             </td>
-                        </tr>
-                        <tr v-else-if="filterUnits.length===0">
+                        </tr> -->
+                        <tr v-if="filterUnits.length===0">
                             <td class="px-4 py-12 text-center text-gray-400" colspan="5">
                                 {{ searchQuery ? 'No product units match your search' : 'No product units found' }}
                             </td>
