@@ -202,8 +202,14 @@ async function submitStockBatch() {
     try {
         await api.post('/stock-items/submit', {
             items: stockItems.value.map((item) => ({
+                // name: item.medicine,
+                // quantity: Number(item.quantity),
                 name: item.medicine,
+                category: item.category,
                 quantity: Number(item.quantity),
+                buying_price: Number(item.buying_price),
+                batch_number: item.batch_number === 'N/A' ? null : item.batch_number,
+                expiry_date: item.expiry_date === 'N/A' ? null : item.expiry_date,
             })),
             payment: payment,
         });
@@ -244,13 +250,6 @@ const canSubmitBatch=computed(()=>{
     );
 });
 
-
-
-// const tomorrow=computed(()=>{
-//     const date= new Date();
-//     date.setDate(date.getDate() +1);
-    
-// })
 </script>
 <template>
     <div class="w-full min-h-screen">
