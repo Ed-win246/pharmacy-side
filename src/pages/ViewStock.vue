@@ -45,7 +45,7 @@ const filteredStock = computed(() => {
 </script>
 <template>
     <div class="min-h-screen w-full ">
-        <div class="max-w-7xl h-full max-auto flex flex-col overflow-y-auto pb-10 p-2">
+        <div class="max-w-7xl h-full mx-auto flex flex-col overflow-y-auto pb-10 p-2">
             <div class="flex items-center justify-between p-4">
                 <div>
                     <h2 class="font-medium text-sm flex items-center uppercase gap-2">Stock</h2>
