@@ -20,6 +20,11 @@ const loggedUser=ref(null);
 const searchQuery=ref('');
 const saving=ref(false);
 
+//pagination logic
+const currentPage=ref(1);
+const pageSize=ref(10);
+const pageSizeOptions=[10,50,100,150,200];
+
 
 const filterUnits=computed(()=>{
     if(!searchQuery.value.trim()){
@@ -163,10 +168,43 @@ async function saveUnit(){
     }finally{
         saving.value=false;
     }
-} 
+}
+
+//pagination logic and functions
+const totalPages=computed(()=>{
+    return Math.ceil(units.value.length / pageSize.value) || 1;
+});
+
+const paginatedUnits=computed(()=>{
+    const start = (currentPage.value -1 ) * pageSize.value;
+    const end = start + pageSize.value;
+    return units.value.slice(start,end);
+});
+
+const visiblePageNumbers=computed(()=>{
+    const pages=[];
+    for(let i=1;i<=totalPages.value;i++){
+        pages.push(i);
+    }
+    return pages;
+});
+
+//navigation functions
+function goToPage(page){
+    if(page<1 || page >totalPages.value) return;
+        currentPage.value=page;
+}
+
+function nextPage(){
+    goToPage(currentPage.value + 1);
+}
+
+function prevPage(){
+    goToPage(currentPage.value -1 );
+}
 </script>
 <template>
-    <div class="mx-auto flex h-full max-w-7xl flex-col space-y-4 overflow-hidden sm:space-y-6">
+    <div class="mx-auto flex  max-w-7xl flex-col space-y-4  sm:space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-1xl font-medium tracking-wide text-gray-700 uppercase">
@@ -180,20 +218,33 @@ async function saveUnit(){
                 <Plus class="w-4 h-4"/>New Product Unit
             </button>
         </div>
-        <div class="relative w-full max-w-sm pl-2">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
-            <input 
-                v-model="searchQuery"
-                type="text"
-                placeholder="search units..."
-                class="w-full pl-9 pr-9 py-2 border border-gray-200 rounded-sm text-sm focus:ring-2 focus:ring-green-500 outline-none">
-            <button
-            v-if="searchQuery"
-                @click="searchQuery=''" 
-                class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-                type="button"
-                aria-label="Clear search"><X class="w-4 h-4"/>
-            </button>
+
+        <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-xs text-gray-600">
+                <span>Show</span>
+                <select v-model="pageSize" class="w-auto rounded-sm border border-gray-300 px-2 py-1 text-xs">
+                    <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                        {{ size }}
+                    </option>
+                </select>
+                <span>entries</span>
+            </div>
+
+            <div class="relative w-full max-w-[200px] pl-2">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
+                <input 
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="search units..."
+                    class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-xs focus:ring-2 focus:ring-green-500 outline-none">
+                <button
+                v-if="searchQuery"
+                    @click="searchQuery=''" 
+                    class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+                    type="button"
+                    aria-label="Clear search"><X class="w-4 h-4"/>
+                </button>
+            </div>
         </div>
 
         <div class="min-h-0 flex-1 overflow-hidden bg-white shadow-sm">
@@ -219,8 +270,8 @@ async function saveUnit(){
                                 {{ searchQuery ? 'No product units match your search' : 'No product units found' }}
                             </td>
                         </tr>
-                        <tr v-for="(uni, index) in filterUnits" :key="uni.id">
-                            <td class="px-2 py-2 font-medium">{{ index + 1 }}</td>
+                        <tr v-for="(uni, index) in paginatedUnits" :key="uni.id">
+                            <td class="px-2 py-2 font-medium">{{(currentPage -1 )*pageSize + index + 1 }}</td>
                             <td class="max-w-[180px] truncate px-2 py-2 font-medium">{{ uni.unit_name }}</td>
                             <td class="max-w-[180px] truncate px-2 py-2 font-medium">{{ getAddedBy(uni) }}</td>
                             <td class="whitespace-nowrap px-2 py-2 font-medium">{{ formatDateOnly(uni.createdAt || uni.created_at || uni.addedDate) }}</td>
@@ -237,6 +288,22 @@ async function saveUnit(){
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="flex justify-end px-2 py-1 text-xs text-gray-600 gap-2">
+                    <div class="flex items-center gap-2">
+                        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+                    </div>
+                    <button v-for="page in visiblePageNumbers"
+                    :key="page"
+                    @click="goToPage(page)"
+                    :class="[
+                        'px-2.5 py-1 border rounded-sm text-xs min-w-[28px]',
+                        page === currentPage
+                            ? 'bg-green-600 text-white border-green-600'
+                            :'border-gray-300 hover:bg-gray-100'   
+                    ]"
+                    >{{ page }}</button>
+                </div>
             </div>
         </div>
         <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">

@@ -217,7 +217,7 @@ function formatDateOnly(value) {
         <span>entries</span>
       </div>
 
-      <div class="relative w-full max-w-sm">
+      <div class="relative w-full max-w-[200px]">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           v-model="searchQuery"
