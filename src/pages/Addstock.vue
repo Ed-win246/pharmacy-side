@@ -130,9 +130,11 @@ const filteredMedicines=computed(()=>{
     return medicines.value.filter(m =>m.category === form.category);
 });
 //watch the category and product
-watch(()=>form.category, ()=>{
+watch(()=>form.category,()=>{
     form.medicine='';
+    
 });
+
 
 
 
