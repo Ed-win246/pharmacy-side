@@ -297,7 +297,7 @@ function prevPage(){
                     :key="page"
                     @click="goToPage(page)"
                     :class="[
-                        'px-2.5 py-1 border rounded-sm text-xs min-w-[28px]',
+                        'h-7 w-7 flex border rounded-full text-xs min-w-[28px] items-center justify-center',
                         page === currentPage
                             ? 'bg-green-600 text-white border-green-600'
                             :'border-gray-300 hover:bg-gray-100'   
