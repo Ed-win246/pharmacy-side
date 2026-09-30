@@ -70,6 +70,12 @@ async function fetchMedicines() {
     }
 }
 
+const getUnitName = (med) => med?.unit_name || med?.unit?.unit_name || med?.unit?.name || '';
+
+const selectedMedicine = computed(() => {
+    return medicines.value.find((m) => m.name === form.medicine) || null;
+});
+
 async function fetchCategories() {
     loading.value = true;
     try {
@@ -124,15 +130,30 @@ async function fetchpaymentOptions() {
 
 //function to search specific categories to a prdouct.
 const filteredMedicines=computed(()=>{
-    if(!form.category) {
-        return medicines.value;//show everything if no category is choosen.
-    }
+    if(!form.category)  return [];
+       // return medicines.value;//show everything if no category is choosen.
+    
     return medicines.value.filter(m =>m.category === form.category);
 });
 //watch the category and product
-watch(()=>form.category,()=>{
-    form.medicine='';
+// watch(()=>form.category,()=>{
+//     form.medicine='';
     
+// });
+
+// Category changed -> the old product and unit no longer apply
+watch(() => form.category, () => {
+    form.medicine = '';
+    form.unit = '';
+});
+
+// Product changed -> pick its unit automatically if it has only one
+watch(() => form.medicine, () => {
+    if (!selectedMedicine.value) {
+        form.unit = '';
+        return;
+    }
+    form.unit = availableUnits.value.length === 1 ? availableUnits.value[0] : '';
 });
 
 
@@ -252,6 +273,31 @@ const canSubmitBatch=computed(()=>{
     );
 });
 
+// names of all units a product can be sold in
+function unitsOfMedicine(med) {
+    const names = [getUnitName(med)];
+
+    // pack units (e.g. Box), if the backend returns them later
+    (med.unit_details || []).forEach((row) => {
+        const unit = units.value.find((u) => u.id === row.unit_id);
+        if (unit) names.push(unit.unit_name);
+    });
+
+    return names.filter(Boolean);
+}
+
+const availableUnits = computed(() => {
+    if (!form.category) return [];   // no category yet -> empty list
+
+    // a product is chosen -> only that product's units
+    if (selectedMedicine.value) {
+        return [...new Set(unitsOfMedicine(selectedMedicine.value))];
+    }
+
+    // only a category is chosen -> units used by any product in that category
+    return [...new Set(filteredMedicines.value.flatMap(unitsOfMedicine))];
+});
+
 </script>
 <template>
     <div class="w-full min-h-screen">
@@ -284,11 +330,13 @@ const canSubmitBatch=computed(()=>{
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="product" class="block text-sm font-medium text-gray-700">Product </label>
-                                <select id="product" v-model="form.medicine" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                                <select
+                                    id="product"
+                                    v-model="form.medicine"
+                                    class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                    >
                                     <option value="">Select option</option>
-                                    <option v-if="form.category && filteredMedicines.length === 0" value="" disabled>
-                                        List is empty..
-                                    </option>
+                                    <option v-if="filteredMedicines.length === 0" value="" disabled>List is empty</option>
                                     <option v-for="medicine in filteredMedicines" :key="medicine.id" :value="medicine.name">
                                         {{ medicine.name }}
                                     </option>
@@ -296,10 +344,15 @@ const canSubmitBatch=computed(()=>{
                             </div>
                             <div>
                                 <label for="unit" class="block text-sm font-medium text-gray-700">Unit </label>
-                                <select id="unit" v-model="form.unit" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
-                                    <option value="" class="text-gray-400">Select option</option>
-                                    <option v-for="unit in units" :key="unit.id" :value="unit.unit_name">
-                                        {{ unit.unit_name }}
+                                <select
+                                    id="unit"
+                                    v-model="form.unit"
+                                    class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                    >
+                                    <option value="">Select option</option>
+                                    <option v-if="availableUnits.length === 0" value="" disabled>List is empty</option>
+                                    <option v-for="unitName in availableUnits" :key="unitName" :value="unitName">
+                                        {{ unitName }}
                                     </option>
                                 </select>
                             </div>
