@@ -295,7 +295,7 @@ function formatDateOnly(value) {
             :key="page"
             @click="goToPage(page)"
             :class="[
-              'min-w-[28px] rounded-sm border px-2.5 py-1 text-xs',
+              'min-w-[28px] rounded-full border h-7 w-7 text-xs cursor-pointer',
               page === currentPage
                 ? 'border-green-600 bg-green-600 text-white'
                 : 'border-gray-300 hover:bg-gray-100',
