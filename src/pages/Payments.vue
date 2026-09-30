@@ -329,7 +329,7 @@ function goToPage(page) {
               :key="page"
               @click="goToPage(page)"
               :class="[
-                'min-w-[28px] rounded-sm border px-2.5 py-1 text-xs',
+                'min-w-[28px] rounded-full border w-7 h-7 flex items-center justify-center text-xs',
                 page === currentPage
                   ? 'border-green-600 bg-green-600 text-white'
                   : 'border-gray-300 hover:bg-gray-100',
