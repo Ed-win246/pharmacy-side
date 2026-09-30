@@ -1,450 +1,593 @@
 <script setup>
-import { onMounted, ref, reactive , computed } from 'vue';
-import { Plus,SquarePenIcon ,Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next';
-import api from '@/lib/api';
-import toast from '@tsirosgeorge/toastnotification';
-import { useProductStore } from '@/stores/productStore';
+import { onMounted, ref, reactive, computed, watch } from 'vue'
+import { Plus, SquarePenIcon, Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next'
+import api from '@/lib/api'
+import toast from '@tsirosgeorge/toastnotification'
+import { useProductStore } from '@/stores/productStore'
 
+const productStore = useProductStore()
 
-const productStore=useProductStore();
+// ---------- State ----------
+const medicines = computed(() => productStore.products || [])
+const categories = ref([])
+const units = ref([])
+const searchQuery = ref('')
 
-// const medicines = ref([]); updated medicines 
-const medicines=computed(()=>productStore.products || []);
-const showModal = ref(false);
-const editingId = ref(null);
-const isEditingForm = ref(false);
-const saving = ref(false);
-const loading = ref(true);
-const showDeleteModal = ref(false);
-const medicineToDelete = ref(null);
-const deleting = ref(false);
-const categories = ref([]);
-const units=ref([]);
-const searchQuery=ref('');
+const loading = ref(true)
+const saving = ref(false)
+const deleting = ref(false)
 
-onMounted(async () => {
-  await Promise.all([fetchMedicines(), fetchCategories(),fetchUnits()]);
-});
+const showModal = ref(false)
+const showDeleteModal = ref(false)
+const isEditingForm = ref(false)
+const editingId = ref(null)
+const medicineToDelete = ref(null)
 
-async function fetchMedicines() {
-  if (!productStore.products || productStore.products.length === 0) {
-    loading.value = true;
-  }
-  try {
-    const { data } = await api.get('/medicines');
-    productStore.setProducts(data);//changed
-  } catch (error) {
-    console.error('Error fetching medicines', error);
-    toast.error('Failed to fetch medicines. Please try again later.');
-  } finally {
-    loading.value = false;
-  }
-}
-
-async function fetchCategories() {
-  // loading.value=true;
-  try {
-    const { data } = await api.get('/categories');
-    categories.value = data;
-  } catch (error) {
-    console.error('Error fetching categories', error);
-    toast.error('Failed to fetch categories. Please try again later.');
-  }
-}
-
-async function fetchUnits() {
-  // loading.value=true;
-  try {
-    const { data } = await api.get('/units');
-    units.value = data;
-  } catch (error) {
-    console.error('Error fetching product units', error);
-    toast.error('Failed to fetch product units. Please try again later.');
-  }
-}
+// Pagination
+const currentPage = ref(1)
+const pageSize = ref(10)
+const pageSizeOptions = [10, 50, 100, 150, 200]
 
 const form = reactive({
   name: '',
   genericName: '',
   category: '',
-  unit_name:'',
-  min_quantity:'',
-  selling_price:'',
-  unit_details:[], // repeatable "pack unit" rows — captured here for a future page, not sent yet
-});
+  unit_name: '',
+  min_quantity: '',
+  selling_price: '',
+  unit_details: [], // repeatable "pack unit" rows — captured for a future page, not sent yet
+})
 
-function resetForm() {
-  form.name = '';
-  form.genericName = '';
-  form.category = '';
-  form.unit_name='';
-  form.min_quantity = '';
-  form.selling_price = '';
-  form.unit_details = [];
+// ---------- Helpers ----------
+const getUnitName = (med) => med.unit_name || med.unit?.unit_name || med.unit?.name || ''
+
+// ---------- Data fetching ----------
+onMounted(() => {
+  Promise.all([fetchMedicines(), fetchCategories(), fetchUnits()])
+})
+
+async function fetchMedicines() {
+  // Only show the loading state when there is nothing cached in the store
+  if (!productStore.products?.length) loading.value = true
+
+  try {
+    const { data } = await api.get('/medicines')
+    productStore.setProducts(data)
+  } catch (error) {
+    console.error('Error fetching medicines', error)
+    toast.error('Failed to fetch medicines. Please try again later.')
+  } finally {
+    loading.value = false
+  }
 }
 
-function formatDateForInput(dateString) {
-  if (!dateString) return '';
-  return dateString.split('T')[0];
+async function fetchCategories() {
+  try {
+    const { data } = await api.get('/categories')
+    categories.value = data
+  } catch (error) {
+    console.error('Error fetching categories', error)
+    toast.error('Failed to fetch categories. Please try again later.')
+  }
+}
+
+async function fetchUnits() {
+  try {
+    const { data } = await api.get('/units')
+    units.value = data
+  } catch (error) {
+    console.error('Error fetching product units', error)
+    toast.error('Failed to fetch product units. Please try again later.')
+  }
+}
+
+// ---------- Form ----------
+function resetForm() {
+  form.name = ''
+  form.genericName = ''
+  form.category = ''
+  form.unit_name = ''
+  form.min_quantity = ''
+  form.selling_price = ''
+  form.unit_details = []
 }
 
 function addNewMedicine() {
-  resetForm();
-  editingId.value = null;
-  isEditingForm.value = false;
-  showModal.value = true;
+  resetForm()
+  editingId.value = null
+  isEditingForm.value = false
+  showModal.value = true
 }
 
 function editMedicine(medicine) {
-  form.name = medicine.name || '';
-  form.genericName = medicine.genericName || '';
-  form.category = medicine.category || '';
-  form.unit_name = medicine.unit_name || medicine.unit?.unit_name || medicine.unit?.name || '';
-  form.min_quantity = medicine.min_quantity || '';
-  form.selling_price = medicine.selling_price || '';
-  form.unit_details = medicine.unit_details ? [...medicine.unit_details] : [];
+  form.name = medicine.name || ''
+  form.genericName = medicine.genericName || ''
+  form.category = medicine.category || ''
+  form.unit_name = getUnitName(medicine)
+  form.min_quantity = medicine.min_quantity || ''
+  form.selling_price = medicine.selling_price || ''
+  form.unit_details = medicine.unit_details ? [...medicine.unit_details] : []
 
-  editingId.value = medicine.id;
-  isEditingForm.value = true;
-  showModal.value = true;
+  editingId.value = medicine.id
+  isEditingForm.value = true
+  showModal.value = true
 }
-
 
 function closeModal() {
-  showModal.value = false;
-  resetForm();
+  showModal.value = false
+  resetForm()
 }
 
-//new row functionality
 function addUnitRow() {
-  form.unit_details.push({
-    unit_id: '',
-    quantity: '',
-    selling_price: '',
-  });
+  form.unit_details.push({ unit_id: '', quantity: '', selling_price: '' })
 }
 
 function removeUnitRow(index) {
-  form.unit_details.splice(index, 1);
+  form.unit_details.splice(index, 1)
 }
 
 async function saveMedicine() {
   if (!form.name || !form.unit_name) {
-    alert('Please fill in required fields: Name and Smallest unit');
-    return;
+    toast.error('Please fill in the required fields: Name and Smallest unit')
+    return
   }
+
   const payload = {
     name: form.name,
     genericName: form.genericName || null,
     category: form.category || null,
     unit_name: form.unit_name,
-    };
+  }
 
-  saving.value = true;
+  saving.value = true
   try {
     if (isEditingForm.value) {
-      const { data } = await api.put(`/medicines/${editingId.value}`, payload);
-      const index = productStore.products.findIndex(m => m.id === editingId.value);//changed this line from medicines.value.findIndex
-      if (index !== -1) {
-        productStore.products[index] = data;//changed this medicines.value
-      }
-      toast.success('Medicine updated successfully!');
+      const { data } = await api.put(`/medicines/${editingId.value}`, payload)
+      const index = productStore.products.findIndex((m) => m.id === editingId.value)
+      if (index !== -1) productStore.products[index] = data
+      toast.success('Medicine updated successfully!')
     } else {
-      const { data } = await api.post('/medicines', payload);
-      productStore.products.unshift(data);//changed this line as well
-      toast.success('Medicine registered successfully!');
+      const { data } = await api.post('/medicines', payload)
+      productStore.products.unshift(data)
+      toast.success('Medicine registered successfully!')
     }
-    closeModal();
+    closeModal()
   } catch (error) {
-    console.error('Error saving medicine', error);
-    console.error('Medicine validation response', error.response?.data);
+    console.error('Error saving medicine', error)
+    console.error('Medicine validation response', error.response?.data)
 
-    const validationErrors = error.response?.data?.errors;
+    const validationErrors = error.response?.data?.errors
     const firstValidationError = validationErrors
       ? Object.values(validationErrors).flat()[0]
-      : null;
+      : null
 
     toast.error(
       firstValidationError ||
-      error.response?.data?.message ||
-      'Failed to save medicine. Please try again.'
-    );
+        error.response?.data?.message ||
+        'Failed to save medicine. Please try again.'
+    )
   } finally {
-    saving.value = false;
+    saving.value = false
   }
 }
 
-
-
+// ---------- Delete ----------
 function confirmDelete(med) {
-  medicineToDelete.value = med;
-  showDeleteModal.value = true;
+  medicineToDelete.value = med
+  showDeleteModal.value = true
 }
 
 function cancelDelete() {
-  showDeleteModal.value = false;
-  medicineToDelete.value = null;
+  showDeleteModal.value = false
+  medicineToDelete.value = null
 }
 
 async function deleteMedicine() {
-  if (!medicineToDelete.value) return;
-  deleting.value = true;
+  if (!medicineToDelete.value) return
+
+  deleting.value = true
   try {
-    //filter products directly on the pinia store
-    await api.delete(`/medicines/${medicineToDelete.value.id}`);
-    productStore.products =productStore.products.filter(m => m.id !== medicineToDelete.value.id);
-    toast.success('Medicine deleted successfully!');
-    showDeleteModal.value = false;
-    medicineToDelete.value = null;
+    const id = medicineToDelete.value.id
+    await api.delete(`/medicines/${id}`)
+    productStore.products = productStore.products.filter((m) => m.id !== id)
+    toast.success('Medicine deleted successfully!')
+    cancelDelete()
   } catch (error) {
-    console.error('Error deleting medicine', error);
-    toast.error('Medicine could not be deleted.');
+    console.error('Error deleting medicine', error)
+    toast.error('Medicine could not be deleted.')
   } finally {
-    deleting.value = false;
+    deleting.value = false
   }
 }
-//searching for products function
-const filterMedicines=computed(()=>{
-  if(!searchQuery.value.trim()){
-    return medicines.value;
-  }
-  const query=searchQuery.value.toLowerCase();
-  return medicines.value.filter(med =>
-    [med.name, med.genericName, med.category, med.unit_name, med.unit?.unit_name, med.unit?.name]
+
+// ---------- Search ----------
+const filteredMedicines = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return medicines.value
+
+  return medicines.value.filter((med) =>
+    [med.name, med.genericName, med.category, getUnitName(med)]
       .filter(Boolean)
-      .some(value => value.toLowerCase().includes(query))
-  );
-});
+      .some((value) => value.toLowerCase().includes(query))
+  )
+})
+
+// ---------- Pagination (works on the filtered list) ----------
+const totalPages = computed(() => Math.ceil(filteredMedicines.value.length / pageSize.value) || 1)
+
+const paginatedMedicines = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredMedicines.value.slice(start, start + pageSize.value)
+})
+
+const visiblePageNumbers = computed(() =>
+  Array.from({ length: totalPages.value }, (_, i) => i + 1)
+)
+
+// Go back to page 1 whenever the result set changes
+watch([pageSize, searchQuery, () => medicines.value.length], () => {
+  currentPage.value = 1
+})
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
 </script>
 
 <template>
-  <div class="h-full max-w-7xl mx-auto flex flex-col space-y-6 overflow-hidden">
+  <!-- No fixed height / overflow here: the whole page scrolls, not the table -->
+  <div class="max-w-7xl mx-auto flex flex-col space-y-6">
+    <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-1xl font-medium text-gray-500 uppercase tracking-wide">Products </h1>
+        <h1 class="text-base font-medium text-gray-500 uppercase tracking-wide">Products</h1>
         <p class="text-sm text-gray-500">Manage medicines and track stock levels</p>
       </div>
-      <button 
+      <button
         @click="addNewMedicine"
-        class="flex items-center rounded-sm gap-2 bg-green-600 text-white text-xs px-2 py-2  hover:bg-green-700 font-medium transition cursor-pointer"
+        class="flex items-center gap-2 rounded-sm bg-green-600 px-2 py-2 text-xs font-medium text-white transition hover:bg-green-700 cursor-pointer"
       >
         <Plus class="w-4 h-4" /> New Product
       </button>
     </div>
-    <!-- Search products -->
-    <div class="relative max-w-sm pl-2">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search Product..."
-        class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-xs focus:ring-2 focus:ring-green-500 outline-none"
-      />
-      <button
-        v-if="searchQuery"
-        @click="searchQuery = ''"
-        type="button"
-        aria-label="Clear search"
-        class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-      >
-        <X class="h-4 w-4" />
-      </button>
-    </div>
-    <div class="min-h-0 flex-1 bg-white  ">
-      <div class="h-full overflow-auto">
-        <table class="w-[90%] min-w-[620px] text-sm text-left text-gray-600 divide-y ">
-          <thead class="sticky top-0 z-10 border-b border-gray-200  text-xs  tracking-wide text-gray-500">
-            <tr>
-              <th class="px-2 py-4 font-meduim">#</th>
-              <th class="px-4 py-4 font-semibold">Medicine Name</th>
-              <th class="px-4 py-4 font-semibold">Generic Name</th>
-              <th class="px-4 py-4 font-semibold">Smallest Unit</th>
-              <th class="px-4 py-4 font-semibold">Category</th>
-              <th class="px-4 py-4 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <!-- <tr v-if="loading">
-              <td class="px-5 py-12 text-center text-gray-500" colspan="5">
-                Loading Products...
-              </td>
-            </tr> -->
-            <tr v-if="filterMedicines.length === 0">
-              <td class="px-5 py-12 text-center text-gray-500" colspan="5">
-                {{ searchQuery ? 'No products match your search':'No products available' }}
-              </td>
-            </tr>
-            <tr v-for="(med,index) in filterMedicines" :key="med.id" class="transition-colors hover:bg-green-50/40">
-              <td class="px-2 py-2 font-medium">{{ index + 1 }}</td>
-              <td class="px-2 py-2 font-semibold text-gray-900">{{ med.name }}</td>
-              <td class="px-2 py-2 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
-              <td class="px-2 py-2">
-                 <span v-if="med.unit_name || med.unit?.unit_name || med.unit?.name" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                   {{ med.unit_name || med.unit?.unit_name || med.unit?.name }}
-                </span>
-                <span v-else class="text-gray-400">Not provided</span>
-              </td>
-              <td class="px-2 py-2">
-                <span v-if="med.category" class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                  {{ med.category }}
-                </span>
-                <span v-else class="text-gray-400">Not provided</span>
-              </td>
-              <td class="px-5 py-2">
-                <div class="flex items-center gap-0">
-                <button @click="editMedicine(med)" :aria-label="`Edit ${med.name}`" class="flex h-7 w-7 items-center justify-center rounded-l-sm rounded-r-none bg-green-500 text-white transition hover:bg-green-100 hover:text-green-700 cursor-pointer">
-                  <SquarePenIcon class="w-4 h-4" />
-                </button>
-                <button @click="confirmDelete(med)" :aria-label="`Delete ${med.name}`" class="flex h-7 w-7 items-center justify-center rounded-l-none rounded-r-sm bg-red-500 text-white transition hover:bg-red-100 hover:text-red-600 cursor-pointer">
-                  <Trash2 class="w-4 h-4" />
-                </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+    <!-- Page size (left) + search (right) -->
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2 text-xs text-gray-600">
+        <span>Show</span>
+        <select v-model="pageSize" class="w-auto rounded-sm border border-gray-300 px-2 py-1 text-xs">
+          <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+        </select>
+        <span>entries</span>
+      </div>
+
+      <div class="relative w-full max-w-sm">
+        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search Product..."
+          class="w-full rounded-sm border border-gray-400 py-2 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          type="button"
+          aria-label="Clear search"
+          class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+        >
+          <X class="h-4 w-4" />
+        </button>
       </div>
     </div>
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full">
-          <div class="p-6">
-            <h2 class="text-lg font-semibold text-gray-800">Delete Product</h2>
-            <p class="mt-2 text-sm text-gray-500">
-              Are you sure you want to delete <span class="font-semibold text-gray-700">{{ medicineToDelete?.name }}</span>? This action cannot be undone.
-            </p>
-          </div>
-          <div class="flex justify-end gap-3 p-4 border-t border-gray-200">
-            <button @click="cancelDelete" class="cursor-pointer px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50">
-              Cancel
-            </button>
-            <button @click="deleteMedicine" :disabled="deleting" class="cursor-pointer px-4 py-2 bg-red-600 text-white rounded-sm text-sm hover:bg-red-700 font-medium disabled:opacity-50">
-              {{ deleting ? 'Deleting...' : 'Submit' }}
-            </button>
-          </div>
+
+    <!-- Table -->
+    <div class="bg-white">
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="border-b border-gray-200 text-xs tracking-wide text-gray-500">
+          <tr>
+            <th class="px-2 py-4 font-medium">#</th>
+            <th class="px-2 py-4 font-semibold">Medicine Name</th>
+            <th class="px-2 py-4 font-semibold">Generic Name</th>
+            <th class="px-2 py-4 font-semibold">Smallest Unit</th>
+            <th class="px-2 py-4 font-semibold">Category</th>
+            <th class="px-5 py-4 font-semibold">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100">
+          <tr v-if="filteredMedicines.length === 0">
+            <td class="px-5 py-12 text-center text-gray-500" colspan="6">
+              {{ searchQuery ? 'No products match your search' : 'No products available' }}
+            </td>
+          </tr>
+
+          <tr
+            v-for="(med, index) in paginatedMedicines"
+            :key="med.id"
+            class="transition-colors hover:bg-green-50/40"
+          >
+            <td class="px-2 py-2 font-medium">{{ (currentPage - 1) * pageSize + index + 1 }}</td>
+            <td class="px-2 py-2 font-semibold text-gray-900">{{ med.name }}</td>
+            <td class="px-2 py-2 text-gray-500">{{ med.genericName || 'Not provided' }}</td>
+            <td class="px-2 py-2">
+              <span
+                v-if="getUnitName(med)"
+                class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700"
+              >
+                {{ getUnitName(med) }}
+              </span>
+              <span v-else class="text-gray-400">Not provided</span>
+            </td>
+            <td class="px-2 py-2">
+              <span
+                v-if="med.category"
+                class="inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700"
+              >
+                {{ med.category }}
+              </span>
+              <span v-else class="text-gray-400">Not provided</span>
+            </td>
+            <td class="px-5 py-2">
+              <div class="flex items-center">
+                <button
+                  @click="editMedicine(med)"
+                  :aria-label="`Edit ${med.name}`"
+                  class="flex h-7 w-7 items-center justify-center rounded-l-sm bg-green-500 text-white transition hover:bg-green-100 hover:text-green-700 cursor-pointer"
+                >
+                  <SquarePenIcon class="h-4 w-4" />
+                </button>
+                <button
+                  @click="confirmDelete(med)"
+                  :aria-label="`Delete ${med.name}`"
+                  class="flex h-7 w-7 items-center justify-center rounded-r-sm bg-red-500 text-white transition hover:bg-red-100 hover:text-red-600 cursor-pointer"
+                >
+                  <Trash2 class="h-4 w-4" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="flex justify-end px-2 py-3 text-xs text-gray-600">
+        <div class="flex items-center gap-2">
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+          <button
+            v-for="page in visiblePageNumbers"
+            :key="page"
+            @click="goToPage(page)"
+            :class="[
+              'min-w-[28px] rounded-sm border px-2 py-1 text-xs',
+              page === currentPage
+                ? 'border-green-600 bg-green-600 text-white'
+                : 'border-gray-400 hover:bg-gray-100',
+            ]"
+          >
+            {{ page }}
+          </button>
         </div>
+      </div>
     </div>
 
-    <!-- Registration / Editing Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 class="text-xl font-meduim text-gray-800">
-            {{ isEditingForm ? 'Edit Product ' : 'New Product' }}
+    <!-- Delete confirmation modal -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+    >
+      <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
+        <div class="p-6">
+          <h2 class="text-lg font-semibold text-gray-800">Delete Product</h2>
+          <p class="mt-2 text-sm text-gray-500">
+            Are you sure you want to delete
+            <span class="font-semibold text-gray-700">{{ medicineToDelete?.name }}</span>?
+            This action cannot be undone.
+          </p>
+        </div>
+        <div class="flex justify-end gap-3 border-t border-gray-200 p-4">
+          <button
+            @click="cancelDelete"
+            class="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            @click="deleteMedicine"
+            :disabled="deleting"
+            class="rounded-sm bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 cursor-pointer"
+          >
+            {{ deleting ? 'Deleting...' : 'Delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register / edit modal -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+    >
+      <div class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-gray-200 p-6">
+          <h2 class="text-xl font-medium text-gray-800">
+            {{ isEditingForm ? 'Edit Product' : 'New Product' }}
           </h2>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <X class="w-5 h-5" />
+            <X class="h-5 w-5" />
           </button>
         </div>
 
-        <form @submit.prevent="saveMedicine" class="p-6 space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form @submit.prevent="saveMedicine" class="space-y-4 p-6">
+          <!-- Names -->
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Medicine Name</label>
-              <input v-model="form.name" type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. Amoxil" />
+              <label class="mb-1 block text-xs font-semibold text-gray-700">Medicine Name</label>
+              <input
+                v-model="form.name"
+                type="text"
+                required
+                placeholder="e.g. Amoxil"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-gray-700">Generic Name</label>
+              <input
+                v-model="form.genericName"
+                type="text"
+                placeholder="e.g. Amoxicillin"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+
+          <!-- Category, unit, quantity, price -->
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-gray-700">Category</label>
+              <select
+                v-model="form.category"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select category...</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
+                  {{ cat.Category_name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-gray-500">Smallest unit</label>
+              <select
+                v-model="form.unit_name"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select unit...</option>
+                <option v-for="u in units" :key="u.id" :value="u.unit_name">
+                  {{ u.unit_name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-gray-500">Min Quantity</label>
+              <input
+                v-model="form.min_quantity"
+                type="number"
+                min="1"
+                step="1"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold text-gray-500">Selling Price</label>
+              <input
+                v-model="form.selling_price"
+                type="number"
+                min="0"
+                step="0.01"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+
+          <!-- Big quantities -->
+          <div class="border-t border-gray-200 pt-4">
+            <div class="mb-2 flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                Big quantities
+              </h3>
+              <button
+                type="button"
+                @click="addUnitRow"
+                class="flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 cursor-pointer"
+              >
+                <Plus class="h-3.5 w-3.5" /> Add Big Quantities
+              </button>
             </div>
 
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1">Generic Name</label>
-              <input v-model="form.genericName" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="e.g. Amoxicillin" />
-            </div>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Category</label>
-                <select v-model="form.category" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
-                  <option value="">Select category...</option>
-                  <option v-for="cat in categories" :key="cat.id" :value="cat.Category_name">
-                    {{ cat.Category_name }}
-                  </option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Smallest unit</label>
-                <select v-model="form.unit_name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+            <p v-if="form.unit_details.length === 0" class="text-xs text-gray-400">
+              No big quantities added yet. Click "Add Big Quantities" if this product is also sold
+              in packs (e.g. a Box of 25 Tablets).
+            </p>
+
+            <div
+              v-for="(row, rIndex) in form.unit_details"
+              :key="rIndex"
+              class="mb-3 grid grid-cols-12 items-end gap-2"
+            >
+              <div class="col-span-4">
+                <label class="mb-1 block text-[11px] font-semibold text-gray-500">
+                  <span class="mr-2 text-gray-500">1</span>Unit
+                </label>
+                <select
+                  v-model="row.unit_id"
+                  class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                >
                   <option value="">Select unit...</option>
-                  <option v-for="u in units" :key="u.id" :value="u.unit_name">
-                    {{ u.unit_name  }}
+                  <option v-for="u in units" :key="u.id" :value="u.id">
+                    {{ u.unit_name }}
                   </option>
                 </select>
               </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Min Quantity</label>
-                <input v-model="form.min_quantity" type="number" min="1" max="1" step="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">Selling Price</label>
-                <input v-model="form.selling_price" type="number" min="0" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" />
-              </div>
-            </div>
 
-            <!-- big quantities after the add button -->
-            <div class="border-t border-gray-200 pt-4">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Big quantities</h3>
+              <div class="col-span-3">
+                <label class="mb-1 block text-[11px] font-semibold text-gray-500">
+                  Contains ({{ form.unit_name || 'smallest unit' }})
+                </label>
+                <input
+                  v-model.number="row.quantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 25"
+                  class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div class="col-span-4">
+                <label class="mb-1 block text-[11px] font-semibold text-gray-500">
+                  Selling Price
+                </label>
+                <input
+                  v-model.number="row.selling_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div class="col-span-1 flex justify-end">
                 <button
                   type="button"
-                  @click="addUnitRow"
-                  class="flex items-center gap-1 text-xs font-medium text-green-700 hover:text-green-800 cursor-pointer"
+                  @click="removeUnitRow(rIndex)"
+                  :aria-label="`Remove unit row ${rIndex + 1}`"
+                  class="flex h-8 w-8 items-center justify-center rounded-md bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer"
                 >
-                  <Plus class="w-3.5 h-3.5" />Add Big Quantities
+                  <Trash2 class="h-4 w-4" />
                 </button>
               </div>
-              <p v-if="form.unit_details.length === 0" class="text-xs text-gray-400">
-                No big quantities added yet. Click "Add Unit" if this product is also sold in packs (e.g. a Box of 25 Tablets).
-              </p>
-              <div v-for="(row, rIndex) in form.unit_details" :key="rIndex" class="grid grid-cols-12 gap-2 items-end mb-3">
-                <div class="col-span-4">
-                  <span class="text-gray-500 mr-2">1</span><label class="block text-[11px] font-semibold text-gray-500 mb-1">Unit</label>
-                  <select v-model="row.unit_id" class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none">
-                    <option value="">Select unit...</option>
-                    <option v-for="u in units" :key="u.id" :value="u.id">
-                      {{ u.unit_name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-span-3">
-                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">
-                    Contains ({{ form.unit_name || 'smallest unit' }})
-                  </label>
-                  <input
-                    v-model.number="row.quantity"
-                    type="number"
-                    min="1"
-                    step="1"
-                    placeholder="e.g. 25"
-                    class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none"
-                  />
-                </div>
-                <div class="col-span-4">
-                  <label class="block text-[11px] font-semibold text-gray-500 mb-1">Selling Price</label>
-                  <input
-                    v-model.number="row.selling_price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-green-500 outline-none"
-                  />
-                </div>
-                <div class="col-span-1 flex justify-end">
-                  <button
-                    type="button"
-                    @click="removeUnitRow(rIndex)"
-                    :aria-label="`Remove unit row ${rIndex + 1}`"
-                    class="flex h-8 w-8 items-center justify-center rounded-md bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer"
-                  >
-                    <Trash2 class="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
             </div>
-          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-            <button type="button" @click="closeModal" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-sm text-sm hover:bg-gray-50">
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 border-t border-gray-200 pt-4">
+            <button
+              type="button"
+              @click="closeModal"
+              class="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
               Cancel
             </button>
-            <button type="submit" :disabled="saving" class="flex items-center px-4 py-2 gap-2 bg-green-600 text-white  text-sm hover:bg-green-700 font-medium disabled:opacity-50 rounded-sm">
-             <CircleCheckIcon class="w-4 h-4 "/> {{ saving ? 'Saving...' : (isEditingForm ? 'Submit' : 'Yes') }}
+            <button
+              type="submit"
+              :disabled="saving"
+              class="flex items-center gap-2 rounded-sm bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer"
+            >
+              <CircleCheckIcon class="h-4 w-4" />
+              {{ saving ? 'Saving...' : isEditingForm ? 'Save changes' : 'Save product' }}
             </button>
           </div>
         </form>
