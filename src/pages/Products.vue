@@ -360,7 +360,7 @@ function goToPage(page) {
             :key="page"
             @click="goToPage(page)"
             :class="[
-              'min-w-[28px] rounded-sm border px-2 py-1 text-xs',
+              'min-w-[28px]  border h-7 w-7 rounded-full flex items-center justify-center text-xs',
               page === currentPage
                 ? 'border-green-600 bg-green-600 text-white'
                 : 'border-gray-400 hover:bg-gray-100',
