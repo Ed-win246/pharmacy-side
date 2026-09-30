@@ -267,7 +267,7 @@ function goToPage(page) {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search Product..."
+          placeholder="Search..."
           class="w-full rounded-sm border border-gray-400 py-2 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-green-500"
         />
         <button
@@ -283,8 +283,8 @@ function goToPage(page) {
     </div>
 
     <!-- Table -->
-    <div class="bg-white">
-      <table class="w-full text-left text-sm text-gray-600">
+    <div class="bg-white rounded-sm">
+      <table class="w-full text-left text-sm text-gray-600 ">
         <thead class="border-b border-gray-200 text-xs tracking-wide text-gray-500">
           <tr>
             <th class="px-2 py-4 font-medium">#</th>
@@ -587,7 +587,7 @@ function goToPage(page) {
               class="flex items-center gap-2 rounded-sm bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer"
             >
               <CircleCheckIcon class="h-4 w-4" />
-              {{ saving ? 'Saving...' : isEditingForm ? 'Save changes' : 'Save product' }}
+              {{ saving ? 'Saving...' : isEditingForm ? 'Save changes' : 'Yes' }}
             </button>
           </div>
         </form>
