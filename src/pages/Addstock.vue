@@ -147,13 +147,9 @@ watch(() => form.category, () => {
     form.unit = '';
 });
 
-// Product changed -> pick its unit automatically if it has only one
+// Product changed -> require the user to choose a unit
 watch(() => form.medicine, () => {
-    if (!selectedMedicine.value) {
-        form.unit = '';
-        return;
-    }
-    form.unit = availableUnits.value.length === 1 ? availableUnits.value[0] : '';
+    form.unit = '';
 });
 
 
@@ -279,7 +275,7 @@ function unitsOfMedicine(med) {
 
     // pack units (e.g. Box), if the backend returns them later
     (med.unit_details || []).forEach((row) => {
-        const unit = units.value.find((u) => u.id === row.unit_id);
+        const unit = units.value.find((u) => Number(u.id) === Number(row.unit_id));
         if (unit) names.push(unit.unit_name);
     });
 
@@ -298,6 +294,33 @@ const availableUnits = computed(() => {
     return [...new Set(filteredMedicines.value.flatMap(unitsOfMedicine))];
 });
 
+//logic to capture base quantity
+const unitNameById = (id) =>units.value.find((u)=>Number(u.id) === Number(id))?. unit_name//find unit name by id
+
+const smallestUnitName=computed(()=>getUnitName(selectedMedicine.value));
+//how many smallest units are inside that chosen unit
+const baseQuantity=computed(()=>{
+  const med= selectedMedicine.value;
+  if(!med || !form.unit) return null;
+
+  if(form.unit === getUnitName(med)) return 1;
+
+  //otherwise find the unit row whose name matches
+  const row = (med.unit_details || []).find((r)=>unitNameById(r.unit_id)===form.unit);
+  return row ? Number(row.quantity):null;
+})
+
+//base units logic
+const baseUnits=computed(()=>{
+    const qty = Number(form.quantity);
+    return baseQuantity.value && qty > 0 ? qty*baseQuantity.value : 0;
+});
+
+const pricePerBaseUnit=computed(()=>{
+    const price= Number(form.buying_price);
+
+    return baseUnits.value && price > 0 ? price/baseUnits.value : 0;
+})
 </script>
 <template>
     <div class="w-full min-h-screen">
@@ -358,11 +381,22 @@ const availableUnits = computed(() => {
                             </div>
                         </div>
                         <div>
-                            <label for="total-product-price" class="block text-sm font-medium text-gray-700">Total Buying Price </label>
-                            <input id="total-product-price" v-model="form.buying_price" type="number" step="1" min="1" placeholder="1" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" required>
+                            <div class="mb-1 flex items-center justify-between gap-2">
+                                <label for="total-product-price" class="text-sm font-medium text-gray-700">Total Buying Price</label>
+                                <span class="text-sm text-red-500 italic">
+                                    Base Quantity: {{ baseQuantity ? `${baseQuantity} ${smallestUnitName}` : '—' }}
+                                </span>
+                            </div>
+                            <input id="total-product-price" v-model="form.buying_price" type="number" step="1" min="1" placeholder="1" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm" required>
                         </div>
-                        <div class="border-b-2 border-gray-200 pb-4">
-                            <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity </label>
+
+                        <div>
+                            <div class="mb-1 flex items-center justify-between gap-2">
+                                <label for="quantity" class="text-sm font-medium text-gray-700">Quantity</label>
+                                <span class="text-sm text-red-500 italic">
+                                    Sell per smallest unit: {{ pricePerBaseUnit ? pricePerBaseUnit.toFixed(2) : '—' }}
+                                </span>
+                            </div>
                             <input id="quantity" v-model.number="form.quantity" type="number" min="1" placeholder="1" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                         </div>
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
