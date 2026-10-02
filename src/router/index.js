@@ -26,6 +26,9 @@ import Expenses from "@/pages/Expenses.vue";
 import CategoryExpense from "@/pages/CategoryExpense.vue";
 import ExpenseItems from "@/pages/ExpenseItems.vue";
 import AddExpense from "@/pages/AddExpense.vue";
+import Addsales from "@/pages/Addsales.vue";
+import Customers from "@/pages/Customers.vue";
+import Viewsales from "@/pages/Viewsales.vue";
 
 const routes = [
     { 
@@ -67,6 +70,9 @@ const routes = [
             {path:'addexpense',name:'addexpenses', component: AddExpense},
             {path:'categoryexpenses',name:'categoryexpenses', component: CategoryExpense},
             {path:'expenseitems',name:'expenseitems', component: ExpenseItems},
+            {path:'sellproduct',name:'sellproducts',component: Addsales},
+            {path:'customers',name:'customers',component:Customers},
+            {path:'viewsales',name:'viewsales',component:Viewsales}
         ],
     },
     { 
