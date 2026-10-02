@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, reactive, computed, watch } from 'vue'
-import { Plus, SquarePenIcon, Trash2, X, CircleCheckIcon, Search } from 'lucide-vue-next'
+import { Plus, SquarePenIcon, Trash2, X, CircleCheckIcon, Search, Download } from 'lucide-vue-next'
 import api from '@/lib/api'
 import toast from '@tsirosgeorge/toastnotification'
 import { useProductStore } from '@/stores/productStore'
@@ -106,7 +106,11 @@ function editMedicine(medicine) {
   form.unit_name = getUnitName(medicine)
   form.min_quantity = medicine.min_quantity || ''
   form.selling_price = medicine.selling_price || ''
-  form.unit_details = medicine.unit_details ? [...medicine.unit_details] : []
+  form.unit_details = (medicine.unit_details || [].map((r)=>({//to show the big quantities as well for editing
+    unit_id:r.unit_id,
+    quantity:r.quantity,
+    selling_price:r.selling_price,
+  })))
 
   editingId.value = medicine.id
   isEditingForm.value = true
@@ -132,11 +136,38 @@ async function saveMedicine() {
     return
   }
 
+  //validating the big quantities row
+  const seen= new Set()
+  for (const row of form.unit_details){
+    const unit = units.value.find((u)=>u.id === row.unit_id)
+    if(!row.unit_id || !Number.isInteger(Number(row.quantity)) || Number(row.quantity) <1){
+      toast.error('Big quantity needs a unit and quantity of at least 1');
+      return;
+    }
+    if(unit?.unit_name === form.unit_name){
+      toast.error('A big quantity must be different from the smallest unit.');
+      return;
+    }
+    if(seen.has(row.unit_id)){
+      toast.error('The same big quantity has been added twice');
+      return;
+    }
+    seen.add(row.unit_id);
+  }
+
+  //updated payload to also capture other fields
   const payload = {
     name: form.name,
     genericName: form.genericName || null,
     category: form.category || null,
     unit_name: form.unit_name,
+    min_quantity:form.min_quantity === ''? null:Number(form.min_quantity),
+    selling_price:form.selling_price === ''? null: Number(form.selling_price),
+    unit_details:form.unit_details.map((row)=>({
+      unit_id:row.unit_id,
+      quantity:Number(row.quantity),
+      selling_price:row.selling_price === ''? null: Number(row.selling_price)
+    }))
   }
 
   saving.value = true
@@ -233,6 +264,32 @@ function goToPage(page) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
 }
+
+//export medicines
+async function exportMedicines(){
+  try{
+    const response =await api.get('/medicines/export',{responseType:'blob'});
+    downloadFile(response.data,'medicines.csv');
+
+  }catch(error){
+    console.error('Failed to export products',error);
+    toast.error('Failed to export products');
+  }
+}
+//shared helper to make the broswer save it
+function downloadFile(blobData, filename){
+  const blob = new Blob([blobData],{
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  const url=window.URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  link.click();
+  window.URL.revokeObjectURL(url)
+}
+
+
 </script>
 
 <template>
@@ -252,6 +309,14 @@ function goToPage(page) {
       </button>
     </div>
 
+    <div class="flex flex-wrap items-center justify-end pt-4 px-4 gap-2">
+      <button @click="exportMedicines"
+          type="button"
+          class="flex items-center gap-2 rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 cursor-pointer">
+        <Download class="w-4 h-4"/> Export
+      </button>
+    </div>
+
     <!-- Page size (left) + search (right) -->
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2 text-xs text-gray-600">
@@ -262,8 +327,10 @@ function goToPage(page) {
         <span>entries</span>
       </div>
 
+      <div class="flex items-center gap-2">
+        <span class="text-sm whitespace-nowrap font-medium">Search :</span>
       <div class="relative w-full max-w-[200px]">
-        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+       <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
           v-model="searchQuery"
           type="text"
@@ -280,6 +347,7 @@ function goToPage(page) {
           <X class="h-4 w-4" />
         </button>
       </div>
+       </div>
     </div>
 
     <!-- Table -->
@@ -507,8 +575,7 @@ function goToPage(page) {
             </div>
 
             <p v-if="form.unit_details.length === 0" class="text-xs text-gray-400">
-              No big quantities added yet. Click "Add Big Quantities" if this product is also sold
-              in packs (e.g. a Box of 25 Tablets).
+              No big quantities added yet. Click "Add Big Quantities" to add them.
             </p>
 
             <div
