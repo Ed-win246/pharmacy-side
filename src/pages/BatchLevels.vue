@@ -195,7 +195,7 @@ function goToPage(page) {
 
       <!-- Table -->
       <div class="mt-4 bg-white shadow-sm rounded-sm">
-        <table class="w-full text-left text-sm">
+        <table class="w-full text-left text-xs">
           <thead class="border-b tracking-wide">
             <tr>
               <th class="px-2 py-2 font-semibold">#</th>
