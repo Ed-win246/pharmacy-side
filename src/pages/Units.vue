@@ -230,20 +230,23 @@ function prevPage(){
                 <span>entries</span>
             </div>
 
-            <div class="relative w-full max-w-[200px] pl-2">
-                <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
-                <input 
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="search units..."
-                    class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-xs focus:ring-2 focus:ring-green-500 outline-none">
-                <button
-                v-if="searchQuery"
-                    @click="searchQuery=''" 
-                    class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-                    type="button"
-                    aria-label="Clear search"><X class="w-4 h-4"/>
-                </button>
+            <div class="flex items-center gap-2">
+                <span class="font-medium whitespace-nowrap text-sm">Search :</span>
+                <div class="relative w-full max-w-[200px] pl-2">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"/>
+                    <input 
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="search units..."
+                        class="w-full pl-9 pr-9 py-2 border border-gray-400 rounded-sm text-xs focus:ring-2 focus:ring-green-500 outline-none">
+                    <button
+                    v-if="searchQuery"
+                        @click="searchQuery=''" 
+                        class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+                        type="button"
+                        aria-label="Clear search"><X class="w-4 h-4"/>
+                    </button>
+                </div>
             </div>
         </div>
 
