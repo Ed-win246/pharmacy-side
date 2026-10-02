@@ -346,7 +346,7 @@ async function submitImport() {
 
       <!-- Show entries (left) + search (right) -->
       <div class="flex items-center justify-between gap-4 px-4 py-4">
-        <div class="flex items-center gap-2 text-xs text-gray-600">
+        <div class="flex items-center gap-2 text-xs ">
           <span>Show</span>
           <select v-model="pageSize" class="w-auto rounded-sm border border-gray-300 px-2 py-1 text-xs">
             <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
@@ -354,23 +354,26 @@ async function submitImport() {
           <span>entries</span>
         </div>
 
-        <div class="relative ml-auto w-full max-w-[220px]">
-          <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search suppliers..."
-            class="w-full rounded-sm border border-gray-300 py-1.5 pl-8 pr-8 text-xs outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <button
-            v-if="searchQuery"
-            @click="searchQuery = ''"
-            type="button"
-            aria-label="Clear search"
-            class="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-          >
-            <X class="h-4 w-4 cursor-pointer" />
-          </button>
+        <div class="flex items-center gap-2">
+            <span class="font-medium whitespace-nowrap text-sm">Search:</span>
+            <div class="relative ml-auto w-full max-w-[220px]">
+            <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search suppliers..."
+                class="w-full rounded-sm border border-gray-300 py-1.5 pl-8 pr-8 text-xs outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <button
+                v-if="searchQuery"
+                @click="searchQuery = ''"
+                type="button"
+                aria-label="Clear search"
+                class="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+            >
+                <X class="h-4 w-4 cursor-pointer" />
+            </button>
+            </div>
         </div>
       </div>
 
