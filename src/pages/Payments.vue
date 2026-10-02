@@ -230,23 +230,26 @@ function goToPage(page) {
           <span>entries</span>
         </div>
 
-        <div class="relative ml-auto w-full max-w-[200px]">
-          <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search payment options..."
-            class="w-full rounded-sm border border-gray-400 py-1.5 pl-8 pr-8 text-xs outline-none focus:ring-2 focus:ring-green-500"
-          />
-          <button
-            v-if="searchQuery"
-            @click="searchQuery = ''"
-            type="button"
-            aria-label="Clear search"
-            class="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-          >
-            <X class="h-4 w-4 cursor-pointer" />
-          </button>
+        <div class="flex items-center gap-2">
+            <span class="font-medium whitespace-nowrap text-sm">Search:</span>
+            <div class="relative ml-auto w-full max-w-[200px]">
+                <Search class="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Search payment options..."
+                    class="w-full rounded-sm border border-gray-400 py-1.5 pl-8 pr-8 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button
+                    v-if="searchQuery"
+                    @click="searchQuery = ''"
+                    type="button"
+                    aria-label="Clear search"
+                    class="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+                >
+                    <X class="h-4 w-4 cursor-pointer" />
+                </button>
+            </div>
         </div>
       </div>
 
