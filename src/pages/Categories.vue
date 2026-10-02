@@ -195,8 +195,8 @@ function formatDateOnly(value) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-xl font-medium uppercase tracking-wide text-gray-700">Product Categories</h2>
-        <p class="text-sm text-gray-500">Manage the categories used for your products</p>
+        <h2 class="text-sm font-medium uppercase tracking-wide text-gray-700">Product Categories</h2>
+        <p class="text-xs text-gray-500">Manage the categories used for your products</p>
       </div>
       <button
         @click="addNewCategory"
@@ -217,28 +217,31 @@ function formatDateOnly(value) {
         <span>entries</span>
       </div>
 
-      <div class="relative w-full max-w-[200px]">
-        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search category..."
-          class="w-full rounded-sm border border-gray-400 py-2 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <button
-          v-if="searchQuery"
-          @click="searchQuery = ''"
-          type="button"
-          aria-label="Clear search"
-          class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
-        >
-          <X class="h-4 w-4" />
-        </button>
-      </div>
+      <div class="flex items-center gap-1">
+        <span class="font-medium text-sm whitespace-nowrap">Search:</span>
+            <div class="relative w-full max-w-[200px]">
+                <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search category..."
+                class="w-full rounded-sm border border-gray-400 py-2 pl-9 pr-9 text-xs outline-none focus:ring-2 focus:ring-green-500"
+                />
+                <button
+                v-if="searchQuery"
+                @click="searchQuery = ''"
+                type="button"
+                aria-label="Clear search"
+                class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+                >
+                <X class="h-4 w-4" />
+                </button>
+            </div>
+       </div>
     </div>
 
     <!-- Table -->
-    <div class="bg-white shadow-sm">
+    <div class="bg-white shadow-sm rounded-sm">
       <table class="w-full text-left text-sm text-black">
         <thead class="border-b text-xs tracking-wide text-black">
           <tr>
@@ -269,14 +272,14 @@ function formatDateOnly(value) {
                 <button
                   @click="editCategory(cat)"
                   aria-label="Edit category"
-                  class="flex h-7 w-7 items-center justify-center rounded-l-sm bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+                  class="flex h-7 w-7 items-center justify-center rounded-l-sm bg-green-600 text-white hover:bg-green-100 cursor-pointer hover:text-green-600"
                 >
                   <SquarePenIcon class="h-4 w-4" />
                 </button>
                 <button
                   @click="confirmDelete(cat)"
                   aria-label="Delete category"
-                  class="flex h-7 w-7 items-center justify-center rounded-r-sm bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+                  class="flex h-7 w-7 items-center justify-center rounded-r-sm bg-red-600 text-white hover:bg-red-100 cursor-pointer hover:text-red-600"
                 >
                   <Trash2 class="h-4 w-4" />
                 </button>
