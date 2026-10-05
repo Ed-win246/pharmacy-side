@@ -221,16 +221,22 @@ async function submitStockBatch() {
     try {
         await api.post('/stock-items/submit', {
             items: stockItems.value.map((item) => ({
-                // name: item.medicine,
-                // quantity: Number(item.quantity),
                 name: item.medicine,
+                unit_name: item.unit,
                 category: item.category,
                 quantity: Number(item.quantity),
                 buying_price: Number(item.buying_price),
                 batch_number: item.batch_number === 'N/A' ? null : item.batch_number,
                 expiry_date: item.expiry_date === 'N/A' ? null : item.expiry_date,
+                supplier:item.supplier || payment.supplier,
+                amount_paid: Number(item.amount_paid || payment.amount_paid),
             })),
-            payment: payment,
+            payment:{
+                supplier: payment.supplier,
+                amount_paid: Number(payment.amount_paid) || 0,
+                paymentOPtions: payment.paymentOptions,
+                pay_date: payment.pay_date,
+            }
         });
         toast.success('Stock batch saved successfully!');
         stockStore.clearItems();
