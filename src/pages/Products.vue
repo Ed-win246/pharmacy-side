@@ -4,8 +4,10 @@ import { Plus, SquarePenIcon, Trash2, X, CircleCheckIcon, Search, Download } fro
 import api from '@/lib/api'
 import toast from '@tsirosgeorge/toastnotification'
 import { useProductStore } from '@/stores/productStore'
+import {useStockStore} from '@/stores/stockStore'
 
 const productStore = useProductStore()
+const stockStore = useStockStore()
 
 // ---------- State ----------
 const medicines = computed(() => productStore.products || [])
@@ -172,12 +174,29 @@ async function saveMedicine() {
 
   saving.value = true
   try {
-    if (isEditingForm.value) {
+    // if (isEditingForm.value) {
+    //   const { data } = await api.put(`/medicines/${editingId.value}`, payload)
+    //   const index = productStore.products.findIndex((m) => m.id === editingId.value)
+    //   if (index !== -1) productStore.products[index] = data
+    //   toast.success('Medicine updated successfully!')
+    // } 
+        if (isEditingForm.value) {
+      // remember the old name before it is replaced
+      const oldName = productStore.products.find((m) => m.id === editingId.value)?.name
+
       const { data } = await api.put(`/medicines/${editingId.value}`, payload)
       const index = productStore.products.findIndex((m) => m.id === editingId.value)
       if (index !== -1) productStore.products[index] = data
+
+      // Keep pending stock rows in sync with the renamed product.
+      const newName = data.name || payload.name
+      if (oldName && oldName !== newName) {
+        stockStore.renameMedicine(oldName, newName)
+      }
+
       toast.success('Medicine updated successfully!')
-    } else {
+    }
+    else {
       const { data } = await api.post('/medicines', payload)
       productStore.products.unshift(data)
       toast.success('Medicine registered successfully!')
