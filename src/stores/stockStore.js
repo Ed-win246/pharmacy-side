@@ -27,6 +27,13 @@ export const useStockStore = defineStore('stockStore', {
             saveItems(this.items);
         },
 
+        renameMedicine(oldName, newName) {
+            this.items.forEach((item) => {
+                if (item.medicine === oldName) item.medicine = newName;
+            });
+            saveItems(this.items);
+        },
+
         removeItem(index) {
             this.items.splice(index,1);
             saveItems(this.items);
