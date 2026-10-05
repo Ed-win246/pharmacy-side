@@ -140,7 +140,8 @@ function prevPage(){
                             <tr v-for="(item, index) in paginatedItems" :key="item.id">
                                 <td class="px-2 py-2">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
                                 <td class="px-2 py-2">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
-                                <td class="px-2 py-2">{{ item.quantity }}</td>
+                                <!-- <td class="px-2 py-2">{{ item.quantity }}</td> -->
+                                <td class="px-2 py-2">{{ item.quantity }} {{ item.unit_name }}</td>
                             </tr>
                         </tbody>
                     </table>
