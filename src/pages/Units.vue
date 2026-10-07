@@ -204,7 +204,7 @@ function prevPage(){
 }
 </script>
 <template>
-    <div class="mx-auto flex  max-w-7xl flex-col space-y-4  sm:space-y-6">
+    <div class=" flex flex-col space-y-4  sm:space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-1xl font-medium tracking-wide text-gray-700 uppercase">
@@ -250,7 +250,7 @@ function prevPage(){
             </div>
         </div>
 
-        <div class="min-h-0 flex-1 overflow-hidden bg-white shadow-sm">
+        <div class="min-h-0 flex-1 overflow-hidden bg-white shadow-sm rounded-sm">
             <div class="h-full w-full overflow-auto">
                 <table class="w-full min-w-[560px] divide-y divide-slate-100 text-left text-sm text-black">
                     <thead class="sticky top-0 z-10 border-b bg-white text-xs tracking-wide text-black">
