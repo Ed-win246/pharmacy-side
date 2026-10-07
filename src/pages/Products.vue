@@ -313,7 +313,7 @@ function downloadFile(blobData, filename){
 
 <template>
   <!-- No fixed height / overflow here: the whole page scrolls, not the table -->
-  <div class="max-w-7xl mx-auto flex flex-col space-y-6">
+  <div class=" flex flex-col space-y-6">
     <!-- Header -->
     <div class="flex justify-between items-center">
       <div>
