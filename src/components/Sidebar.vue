@@ -208,7 +208,7 @@ function logout() {
             </div>
         </div>
 
-        <nav class="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
+        <nav class="sidebar-nav min-h-0 flex-1 space-y-1.5 overflow-y-auto p-3">
             <!-- Dashboard Link -->
             <router-link
                 v-for="item in menuItem"
@@ -501,3 +501,14 @@ function logout() {
         </div>
     </aside>
 </template>
+
+<style scoped>
+.sidebar-nav {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    display: none;
+}
+</style>
