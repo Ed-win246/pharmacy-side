@@ -296,7 +296,7 @@ async function submitImport() {
 <template>
   <!-- No fixed height / overflow here: the whole page scrolls, not the table -->
   <div class="w-full">
-    <div class="max-w-7xl mx-auto flex flex-col p-2 pb-10">
+    <div class=" flex flex-col p-2 pb-10">
       <!-- Header / breadcrumb -->
       <div class="flex items-center justify-between border-b border-gray-200 p-4">
         <h2 class="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-700">
