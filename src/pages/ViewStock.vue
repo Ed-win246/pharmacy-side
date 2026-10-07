@@ -82,7 +82,7 @@ function prevPage(){
 </script>
 <template>
     <div class="min-h-screen w-full ">
-        <div class="max-w-7xl  mx-auto flex flex-col  pb-10 p-2">
+        <div class=" flex flex-col  pb-10 p-2">
             <div class="flex items-center justify-between p-4">
                 <div>
                     <h2 class="font-medium text-sm flex items-center uppercase gap-2">Stock</h2>
@@ -122,9 +122,9 @@ function prevPage(){
                     <table class="w-full min-w-[560px] divide-y divide-slate-200 mt-2 text-left text-sm ">
                         <thead class="sticky z-10 border-b border-gray-200 top-0 tracking-wide">
                             <tr>
-                                <th class="px-2 py-2 font-medium">#</th>
-                                <th class="px-2 py-2 font-medium">Product Name</th>
-                                <th class="px-2 py-2 font-medium">Quantity</th>
+                                <th class="px-3 py-2 font-medium">#</th>
+                                <th class="px-3 py-2 font-medium">Product Name</th>
+                                <th class="px-3 py-2 font-medium">Quantity</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
@@ -138,10 +138,10 @@ function prevPage(){
                                   <td  class="px-4 py-12 text-center text-gray-500" colspan="3">No search match "{{ searchQuery }}"?</td>
                             </tr>
                             <tr v-for="(item, index) in paginatedItems" :key="item.id">
-                                <td class="px-2 py-2">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
-                                <td class="px-2 py-2">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
+                                <td class="px-3 py-2">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
+                                <td class="px-3 py-2">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
                                 <!-- <td class="px-2 py-2">{{ item.quantity }}</td> -->
-                                <td class="px-2 py-2">{{ item.quantity }} {{ item.unit_name }}</td>
+                                <td class="px-3 py-2">{{ item.quantity }} {{ item.unit_name }}</td>
                             </tr>
                         </tbody>
                     </table>
