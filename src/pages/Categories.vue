@@ -191,7 +191,7 @@ function formatDateOnly(value) {
 
 <template>
   <!-- No fixed height / overflow here: the whole page scrolls, not the table -->
-  <div class="max-w-7xl mx-auto flex flex-col space-y-6">
+  <div class=" flex flex-col pb-10 p-2 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
