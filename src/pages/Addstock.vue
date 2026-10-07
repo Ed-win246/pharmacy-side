@@ -228,13 +228,13 @@ async function submitStockBatch() {
                 buying_price: Number(item.buying_price),
                 batch_number: item.batch_number === 'N/A' ? null : item.batch_number,
                 expiry_date: item.expiry_date === 'N/A' ? null : item.expiry_date,
-                supplier:item.supplier || payment.supplier,
+                //supplier:item.supplier || payment.supplier,
                 amount_paid: Number(item.amount_paid || payment.amount_paid),
             })),
             payment:{
                 supplier: payment.supplier,
                 amount_paid: Number(payment.amount_paid) || 0,
-                paymentOPtions: payment.paymentOptions,
+                paymentOptions: payment.paymentOptions,
                 pay_date: payment.pay_date,
             }
         });
@@ -330,7 +330,7 @@ const pricePerBaseUnit=computed(()=>{
 </script>
 <template>
     <div class="w-full min-h-screen">
-        <div class="h-full max-w-7xl max-auto flex flex-col overflow-y-auto space-y-6 pb-10 p-2">
+        <div class="h-full flex flex-col pb-10 p-2">
             <div class="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div>
                     <h2 class="font-medium text-sm text-gray-500 uppercase flex items-center gap-2">
