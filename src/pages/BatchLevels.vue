@@ -202,13 +202,13 @@ function goToPage(page) {
         <table class="w-full text-left text-xs ">
           <thead class="border-b tracking-wide ">
             <tr>
-              <th class="px-2 py-2 font-semibold">#</th>
-              <th class="px-2 py-2 font-semibold">Product</th>
-              <th class="px-2 py-2 font-semibold">Batch</th>
-              <th class="px-2 py-2 font-semibold">Quantity</th>
-              <th class="px-2 py-2 font-semibold">Buy Price</th>
-              <th class="px-2 py-2 font-semibold">Expiry Date</th>
-              <th class="px-2 py-2 font-semibold">Actions</th>
+              <th class="px-4 py-3 font-semibold">#</th>
+              <th class="px-4 py-3 font-semibold">Product</th>
+              <th class="px-4 py-3 font-semibold">Batch</th>
+              <th class="px-4 py-3 font-semibold">Quantity</th>
+              <th class="px-4 py-3 font-semibold">Buy Price</th>
+              <th class="px-4 py-3 font-semibold">Expiry Date</th>
+              <th class="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
 
