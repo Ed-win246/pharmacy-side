@@ -135,11 +135,7 @@ const filteredMedicines=computed(()=>{
     
     return medicines.value.filter(m =>m.category === form.category);
 });
-//watch the category and product
-// watch(()=>form.category,()=>{
-//     form.medicine='';
-    
-// });
+
 
 // Category changed -> the old product and unit no longer apply
 watch(() => form.category, () => {
