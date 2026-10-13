@@ -37,13 +37,14 @@ async function fetchPostedStock() {
 
 const filteredStock = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
-    if (!query) return stockItems.value;
+    if (!query) return groupedStock.value;
 
-    return stockItems.value.filter((item) => {
-        const name = String(item.name ?? item.medicine_name ?? item.medicine ?? '').toLowerCase();
-        const quantity = String(item.quantity ?? '').toLowerCase();
-
-        return name.includes(query) || quantity.includes(query);
+    return groupedStock.value.filter((item) => {
+        return item.name.toLowerCase().includes(query) ||
+        item.units.some((u) =>
+            String(u.unit_name ?? '').toLowerCase().includes(query) ||
+            String(u.quantity ?? '').includes(query),
+        );
     });
 });
 //total pages
@@ -79,6 +80,34 @@ function nextPage(){
 function prevPage(){
     goToPage(currentPage.value - 1);
 }
+
+//grouped product with its separate unit names
+const groupedStock = computed(()=>{
+    const groups = {};
+
+    stockItems.value.forEach((item)=>{
+        const name = String(item.name ?? item.medicine_name ??item.medicine ?? '').trim();
+        const key = name.toLowerCase();
+
+        if(!groups[key]){
+            groups[key] = { key, name, units: [] };
+        }
+        groups[key].units.push({
+            id:item.id,
+            unit_name:item.unit_name,
+            quantity:item.quantity,
+        });
+    });
+
+    return Object.values(groups)
+        .map((group) => ({
+            ...group,
+            units: group.units.sort((a, b) =>
+                String(a.unit_name ?? '').localeCompare(String(b.unit_name))
+            ),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+});
 </script>
 <template>
     <div class="min-h-screen w-full ">
@@ -137,11 +166,14 @@ function prevPage(){
                             <tr v-else-if="filteredStock.length === 0">
                                   <td  class="px-4 py-12 text-center text-gray-500" colspan="3">No search match "{{ searchQuery }}"?</td>
                             </tr>
-                            <tr v-for="(item, index) in paginatedItems" :key="item.id">
+                            <tr v-for="(item, index) in paginatedItems" :key="item.key">
                                 <td class="px-3 py-2">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
-                                <td class="px-3 py-2">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
-                                <!-- <td class="px-2 py-2">{{ item.quantity }}</td> -->
-                                <td class="px-3 py-2">{{ item.quantity }} {{ item.unit_name }}</td>
+                                <td class="px-3 py-2">{{ item.name }}</td>
+                                <td class="px-3 py-2">
+                                    <div v-for="unit in item.units" :key="unit.id">
+                                        {{ unit.quantity }} {{ unit.unit_name }}
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
