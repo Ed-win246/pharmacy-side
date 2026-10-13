@@ -99,7 +99,7 @@ async function confirmStockUpdate() {
                         <tr>
                             <td class="px-4 py-3 font-medium">#</td>
                             <td class="px-4 py-3 font-medium">Product</td>
-                            <td class="px-4 py-3 font-medium flex items-center justify-center" colspan="2">Batches</td>
+                            <td class="px-4 py-3 font-medium flex items-center justify-center" colspan="4">Batches</td>
                         </tr>
                     </thead>
 
@@ -115,9 +115,9 @@ async function confirmStockUpdate() {
                             </td>
                         </tr>
 
-                        <template v-for="(group, groupIndex) in systemStock" :key="group.key">
+                        <template v-for="(group, groupIndex) in systemStock" :key="group.key" >
                             <!-- header row: number, product name, and the four column labels -->
-                            <tr>
+                            <tr >
                                 <td :rowspan="group.units.length + 1" class="px-4 py-3 font-semibold text-center align-top">
                                     {{ groupIndex + 1 }}
                                 </td>
@@ -155,7 +155,7 @@ async function confirmStockUpdate() {
 
                                 <td class="px-4 py-2.5 text-center">
                                     <button @click="promptUpdate(group, unit)"
-                                        class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-sm font-medium transition cursor-pointer">
+                                        class="bg-green-500 hover:bg-green-100 hover:text-green-500 text-white text-xs px-3 py-1 rounded-sm font-medium transition cursor-pointer">
                                         Save
                                     </button>
                                 </td>
@@ -213,6 +213,6 @@ async function confirmStockUpdate() {
   background-color: #000;
   color: #fff;
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 12px;
 }
 </style>
