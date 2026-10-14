@@ -1,11 +1,74 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { CircleCheck, X} from 'lucide-vue-next';
 
 const systemStock = ref([]);
+// const groupedSystemStock = computed(() => {
+//     const groups = new Map();
+
+//     systemStock.value.forEach((row) => {
+//         const medicineName = String(
+//             row.medicine_name ?? row.name ?? row.medicine ?? ''
+//         ).trim() || 'Unknown';
+//         const key = String(
+//             row.medicine_id ?? row.product_id ?? medicineName.toLowerCase()
+//         );
+
+//         if (!groups.has(key)) {
+//             groups.set(key, {
+//                 key,
+//                 medicine_name: medicineName,
+//                 category: row.category,
+//                 units: [],
+//             });
+//         }
+
+//         const group = groups.get(key);
+//         group.units.push({
+//             ...row,
+//             system_qty: row.system_qty ?? row.quantity,
+//         });
+//     });
+
+//     return [...groups.values()]
+//         .sort((a, b) => a.medicine_name.localeCompare(b.medicine_name));
+// });
+const groupedSystemStock = computed(() => {
+    const groups = new Map();
+
+    systemStock.value.forEach((row) => {
+        const medicineName = String(
+            row.medicine_name ?? row.name ?? ''
+        ).trim() || 'Unknown';
+        const key = medicineName.toLowerCase();
+
+        if (!groups.has(key)) {
+            groups.set(key, {
+                key,
+                medicine_name: medicineName,
+                category: row.category,
+                batches: [],
+            });
+        }
+
+        const group = groups.get(key);
+        group.batches.push({
+            id: row.id,
+            batch_number: row.batch_number || '—',
+            system_qty: row.system_qty,
+            unit_name: row.unit_name,
+            expiry_date: row.expiry_date,
+        });
+    });
+
+    return [...groups.values()]
+        .sort((a, b) => a.medicine_name.localeCompare(b.medicine_name));
+});
+
 const loading = ref(false);
+
 const saving = ref(false);
 
 const showConfirmModal = ref(false);
@@ -28,8 +91,33 @@ async function fetchSystemStock() {
 }
 
 // Runs when Save is clicked: checks the input, then opens the modal
-function promptUpdate(group, unit) {
-    const entered = actualQuantities.value[unit.id];
+// function promptUpdate(group, unit) {
+//     const entered = actualQuantities.value[unit.id];
+
+//     if (entered === undefined || entered === null || entered === '') {
+//         toast.error('Enter the actual quantity first');
+//         return;
+//     }
+//     if (!Number.isInteger(Number(entered)) || Number(entered) < 0) {
+//         toast.error('Actual quantity must be a whole number, 0 or more');
+//         return;
+//     }
+//     if (Number(entered) === Number(unit.system_qty)) {
+//         toast.error('Actual quantity matches the system quantity. Nothing to update.');
+//         return;
+//     }
+
+//     selectedItem.value = {
+//         id: unit.id,                        // the stock_items id
+//         medicine_name: group.medicine_name,
+//         unit_name: unit.unit_name,
+//         system_qty: unit.system_qty,
+//         actual_quantity: Number(entered),
+//     };
+//     showConfirmModal.value = true;
+// }
+function promptUpdate(group, batch) {
+    const entered = actualQuantities.value[batch.id];
 
     if (entered === undefined || entered === null || entered === '') {
         toast.error('Enter the actual quantity first');
@@ -39,22 +127,47 @@ function promptUpdate(group, unit) {
         toast.error('Actual quantity must be a whole number, 0 or more');
         return;
     }
-    if (Number(entered) === Number(unit.system_qty)) {
+    if (Number(entered) === Number(batch.system_qty)) {
         toast.error('Actual quantity matches the system quantity. Nothing to update.');
         return;
     }
 
     selectedItem.value = {
-        id: unit.id,                        // the stock_items id
+        id: batch.id, // the stock_levels batch ID
         medicine_name: group.medicine_name,
-        unit_name: unit.unit_name,
-        system_qty: unit.system_qty,
+        batch_number: batch.batch_number,
+        unit_name: batch.unit_name,
+        system_qty: batch.system_qty,
         actual_quantity: Number(entered),
     };
     showConfirmModal.value = true;
 }
-
 // Runs when Yes is clicked in the modal: sends it to the backend
+// async function confirmStockUpdate() {
+//     if (!selectedItem.value) return;
+//     saving.value = true;
+
+//     try {
+//         const itemId = selectedItem.value.id;
+
+//         await api.post(`/system-stock/${itemId}/reconcile`, {
+//             actual_quantity: selectedItem.value.actual_quantity,
+//         });
+
+//         toast.success(`${selectedItem.value.medicine_name} updated to ${selectedItem.value.actual_quantity} ${selectedItem.value.unit_name ?? ''}`);
+
+//         delete actualQuantities.value[itemId];
+//         showConfirmModal.value = false;
+//         selectedItem.value = null;
+
+//         await fetchSystemStock();
+//     } catch (error) {
+//         console.error('Failed to update system stock', error);
+//         toast.error(error.response?.data?.message || 'Failed to update system stock');
+//     } finally {
+//         saving.value = false;
+//     }
+// }
 async function confirmStockUpdate() {
     if (!selectedItem.value) return;
     saving.value = true;
@@ -62,16 +175,19 @@ async function confirmStockUpdate() {
     try {
         const itemId = selectedItem.value.id;
 
-        await api.post(`/system-stock/${itemId}/reconcile`, {
+        const response = await api.post(`/system-stock/${itemId}/reconcile`, {
             actual_quantity: selectedItem.value.actual_quantity,
         });
 
-        toast.success(`${selectedItem.value.medicine_name} updated to ${selectedItem.value.actual_quantity} ${selectedItem.value.unit_name ?? ''}`);
+        toast.success(`${selectedItem.value.medicine_name} updated successfully`);
 
+        // Clear the input model for this specific unit ID
         delete actualQuantities.value[itemId];
+        
         showConfirmModal.value = false;
         selectedItem.value = null;
 
+        // Fetch fresh stock data from backend
         await fetchSystemStock();
     } catch (error) {
         console.error('Failed to update system stock', error);
@@ -109,19 +225,20 @@ async function confirmStockUpdate() {
                                 Loading system stock...
                             </td>
                         </tr>
-                        <tr v-else-if="systemStock.length === 0">
+                        <tr v-else-if="groupedSystemStock.length === 0">
                             <td class="px-4 py-12 text-center text-xs text-gray-400" colspan="6">
                                 No system stock inserted yet!
                             </td>
                         </tr>
 
-                        <template v-for="(group, groupIndex) in systemStock" :key="group.key" >
-                            <!-- header row: number, product name, and the four column labels -->
-                            <tr >
-                                <td :rowspan="group.units.length + 1" class="px-4 py-3 font-semibold text-center align-top">
+
+                        <template v-for="(group, groupIndex) in groupedSystemStock" :key="group.key">
+                            <!-- Header row: Product details on left, sub-column titles on right -->
+                            <tr>
+                                <td :rowspan="(group.batches?.length || 1) + 1" class="px-4 py-3 font-semibold text-center align-center">
                                     {{ groupIndex + 1 }}
                                 </td>
-                                <td :rowspan="group.units.length + 1" class="px-4 py-3 align-top">
+                                <td :rowspan="(group.batches?.length || 1) + 1" class="px-4 py-3 align-center">
                                     <div class="font-bold text-gray-900 text-sm">{{ group.medicine_name }}</div>
                                     <div class="text-green-600 font-medium text-xs">{{ group.category }}</div>
                                 </td>
@@ -131,31 +248,42 @@ async function confirmStockUpdate() {
                                 <td class="px-2 py-2"><div class="header-actions">Actions</div></td>
                             </tr>
 
-                            <!-- one row per unit (Box, Tablet, ...) -->
-                            <tr v-for="(unit, unitIndex) in group.units" :key="unit.id" class="hover:bg-slate-50">
-                                <!-- batches are listed once, spanning all unit rows of this product -->
-                                <td v-if="unitIndex === 0"
-                                    :rowspan="group.units.length"
-                                    class="px-4 py-2 text-xs font-medium text-gray-700 text-center align-top">
-                                    <div v-if="group.batches.length === 0">-</div>
-                                    <div v-for="b in group.batches" :key="b.id">{{ b.batch_number }}</div>
+                            <!-- Empty state if no batches exist for this product -->
+                            <tr v-if="!group.batches?.length">
+                                <td class="px-4 py-2 text-center text-xs text-gray-400" colspan="4">
+                                    No batches available for this product.
+                                </td>
+                            </tr>
+
+                            <!-- Individual Batch Rows -->
+                            <tr v-for="batch in (group.batches || [])" :key="batch.id" class="hover:bg-slate-50 border-b border-gray-100">
+                                <!-- 1. Individual Batch Number -->
+                                <td class="px-4 py-2 text-xs font-semibold text-gray-800 text-center align-middle">
+                                    {{ batch.batch_number }}
                                 </td>
 
-                                <td class="px-4 py-2 text-xs font-medium text-gray-700 text-center">
-                                    {{ unit.system_qty }} {{ unit.unit_name }}
+                                <!-- 2. System Quantity for this batch -->
+                                <td class="px-4 py-2 text-xs font-medium text-gray-700 text-center align-middle">
+                                    {{ batch.system_qty }} {{ batch.unit_name }}
                                 </td>
 
-                                <td class="px-4 py-2.5 text-center">
-                                    <input type="number"
-                                        v-model.number="actualQuantities[unit.id]"
+                                <!-- 3. Actual Quantity Input Field -->
+                                <td class="px-4 py-2.5 text-center align-middle">
+                                    <input 
+                                        type="number"
+                                        v-model.number="actualQuantities[batch.id]"
                                         placeholder="Enter actual quantity"
                                         min="0"
-                                        class="w-56 border border-gray-300 rounded-sm px-2 py-1 text-xs text-center focus:ring-1 focus:ring-green-500 outline-none"/>
+                                        class="w-56 border border-gray-300 rounded-sm px-2 py-1 text-xs text-center focus:ring-1 focus:ring-green-500 outline-none"
+                                    />
                                 </td>
 
-                                <td class="px-4 py-2.5 text-center">
-                                    <button @click="promptUpdate(group, unit)"
-                                        class="bg-green-500 hover:bg-green-100 hover:text-green-500 text-white text-xs px-3 py-1 rounded-sm font-medium transition cursor-pointer">
+                                <!-- 4. Save Button -->
+                                <td class="px-4 py-2.5 text-center align-middle">
+                                    <button 
+                                        @click="promptUpdate(group, batch)"
+                                        class="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded-sm font-medium transition cursor-pointer"
+                                    >
                                         Save
                                     </button>
                                 </td>
@@ -166,7 +294,7 @@ async function confirmStockUpdate() {
             </div>
 
             <!-- confirmation modal -->
-            <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 backdrop-md flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-sm max-w-2xl w-full p-6 space-y-4 shadow-lg">
                     <div class="flex items-center justify-between border-b border-gray-200">
                         <h3 class="text-xl font-semibold text-gray-900 pb-2">
@@ -180,6 +308,7 @@ async function confirmStockUpdate() {
                     <p class="text-sm text-gray-600 leading-relaxed">
                         Are you sure you want to update quantity of
                         <span class="font-semibold text-gray-900">{{ selectedItem?.medicine_name }}</span>
+                          (Batch: <span class="font-semibold text-gray-900">{{ selectedItem?.batch_number }}</span>)
                         from
                         <span class="font-semibold  text-gray-900">{{ selectedItem?.system_qty }} {{ selectedItem?.unit_name }}</span>
                         to
