@@ -309,7 +309,7 @@ function prevPage(){
                 </div>
             </div>
         </div>
-        <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div v-if="showModal" class="fixed inset-0 bg-black/40 backdrop-md flex items-center justify-center p-4 z-50">
             <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-sm">
                 <div class="flex items-center justify-between border-b border-gray-200 p-4 sm:p-6">
                     <h2 class="text-lg font-medium text-gray-800 sm:text-xl">
@@ -337,7 +337,7 @@ function prevPage(){
                 </form>
             </div>
         </div>
-        <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center p-4 justify-center" v-if="showDeleteModal">
+        <div class="fixed inset-0 z-50 bg-black/40 backdrop-md flex items-center p-4 justify-center" v-if="showDeleteModal">
             <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
                 <div class="p-4 sm:p-6">
                     <h2 class="text-lg font-medium text-gray-800">Delete Product Unit</h2>
