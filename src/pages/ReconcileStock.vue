@@ -306,7 +306,7 @@ async function activateBatch(batch) {
     try {
         await api.post(`/stock-levels/${batch.id}/activate`);
         batch.is_active = true;
-        toast.success(`Batch ${batch.batch_number || '—'} activated`);
+        toast.success(`Batch ${batch.batch_number || '—'} has been activated`);
     } catch (error) {
         console.error('Failed to activate batch', error);
         toast.error(error.response?.data?.message || 'Failed to activate batch');
@@ -468,9 +468,9 @@ async function saveNewStock() {
             </div>
 
             <!-- ============ MAIN TABLE ============ -->
-            <div class="mt-2 bg-white shadow-sm overflow-x-auto rounded-sm">
+            <div class="mt-2 bg-white shadow-sm  rounded-sm">
                 <table class="w-full text-sm text-left">
-                    <thead class="tracking-wider border-b border-gray-200 text-sm">
+                    <thead class="tracking-wide border-b border-gray-200 text-sm">
                         <tr>
                             <th class="px-4 py-3 font-medium">#</th>
                             <th class="px-4 py-3 font-medium">Product</th>
@@ -611,6 +611,7 @@ async function saveNewStock() {
                                             </button>
                                         </div>
                                     </td>
+                                    
                                 </tr>
                             </tbody>
                         </table>
