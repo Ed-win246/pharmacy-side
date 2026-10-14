@@ -331,7 +331,7 @@ function closePayModal() {
             </div>
 
             <!-- pay modal -->
-            <div v-if="showPayModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div v-if="showPayModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-md">
                 <div class="w-full max-w-xl max-h-[80vh] overflow-y-auto rounded-lg bg-white p-5 space-y-4 shadow-sm">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h2 class="font-medium text-sm">Balance Payment</h2>
@@ -368,7 +368,7 @@ function closePayModal() {
             </div>
 
             <!-- view modal -->
-            <div v-if="showViewModal && details" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div v-if="showViewModal && details" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-md">
                 <div class="w-full max-w-3xl rounded-lg bg-white p-5 space-y-6 max-h-[90vh] overflow-y-auto">
                     <div class="flex items-center justify-between">
                         <h3 class="font-medium text-sm uppercase">Details for Trans-{{ String(details.id).padStart(4, '0') }}</h3>
