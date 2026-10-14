@@ -313,7 +313,7 @@ function formatDateOnly(value) {
     <!-- Register / edit modal -->
     <div
       v-if="showModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-md"
     >
       <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-xl">
         <div class="flex items-center justify-between border-b border-gray-200 p-6">
@@ -361,7 +361,7 @@ function formatDateOnly(value) {
     <!-- Delete confirmation modal -->
     <div
       v-if="showDeleteModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-md"
     >
       <div class="w-full max-w-2xl rounded-xl bg-white shadow-xl">
         <div class="p-6">
