@@ -104,6 +104,7 @@ const filteredStock = computed(() => {
       l.quantity,
       l.buying_price,
       l.expiry_date,
+      l.unit_name
     ]
       .map((value) => String(value ?? '').toLowerCase())
       .join(' ')
@@ -253,6 +254,7 @@ function goToPage(page) {
                   <div class="flex flex-col gap-2">
                     <div v-for="level in group.batches" :key="level.id" class="flex h-8 items-center">
                       {{ level.quantity }}
+                      <span v-if="level.unit_name" class="ml-1 text-gray-500">{{ level.unit_name }}</span>
                     </div>
                   </div>
                 </td>
