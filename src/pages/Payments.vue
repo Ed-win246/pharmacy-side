@@ -347,7 +347,7 @@ function goToPage(page) {
       <!-- Register / edit modal -->
       <div
         v-if="showModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-md"
       >
         <div class="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-sm">
           <div class="flex items-center justify-between border-b border-gray-200 p-4 sm:p-6">
@@ -401,7 +401,7 @@ function goToPage(page) {
       <!-- Delete modal -->
       <div
         v-if="showDeleteModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-md"
       >
         <div class="w-full max-w-2xl rounded-sm bg-white p-6 shadow-sm">
           <h2 class="text-lg font-medium">Delete Payment Option</h2>
