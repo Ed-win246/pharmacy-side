@@ -512,7 +512,7 @@ async function saveNewStock() {
             <!-- ============ RECONCILE MODAL ============ -->
             <div v-if="showModal && selected"
                 class="fixed inset-0 backdrop-md bg-black/50 z-50 flex items-center justify-center p-4">
-                <div class="no-scrollbar bg-white max-w-5xl w-full max-h-[80vh] overflow-y-auto shadow-sm p-5 space-y-4 rounded-sm">
+                <div class="no-scrollbar bg-white max-w-6xl w-full max-h-[80vh] overflow-y-auto shadow-sm p-5 space-y-4 rounded-sm">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-sm font-semibold tracking-wider text-gray-700">
                             Reconcile Quantities for: {{ selected.name }}
