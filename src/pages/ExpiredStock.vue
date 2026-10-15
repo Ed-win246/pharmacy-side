@@ -1,11 +1,16 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed,watch } from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-
+import { ChevronsLeft, ChevronsRight } from 'lucide-vue-next';
 
 const stockLevels = ref([]);
 const loading = ref(false);
+
+//pagination state
+const currentPage = ref(1);
+const pageSize = ref(10);//show 10 entries.
+const pageSizeOptions = [10,50,100,150,200];
 
 onMounted(fetchStockLevels);
 
@@ -82,6 +87,41 @@ function statusLabel(row){
     if(row.days === 0) return 'Expires today';
     return `Expires in ${row.days} day${row.days === 1 ? '' : 's'}`;
 }
+
+//pagination logic
+const totalPages =  computed(()=>{//howm many pages per page size
+    return Math.ceil(rows.value.length / pageSize.value) || 1;
+})
+//paginated stocklevels, this is what the table loops over instead of a full list
+const paginatedRows = computed(()=>{
+    const start = (currentPage.value -1)*pageSize.value;
+    const end = start + pageSize.value;
+    return rows.value.slice(start,end);
+})
+//visible page numbers
+const visiblePageNumbers = computed(()=>{
+    const pages = [];
+    for(let i =1;i <=totalPages.value;i++){
+        pages.push(i);
+    }
+    return pages;
+})
+//keep the page number valid
+watch ([pageSize, ()=>rows.value.length],()=>{
+    currentPage.value = 1;
+});
+
+//nagivation functions
+function goToPage(page){
+    if(page <1 || page >totalPages.value) return ;
+        currentPage.value = page;
+}
+function nextPage(){
+    goToPage(currentPage.value + 1);
+}
+function prevPage(){
+    goToPage(currentPage.value - 1);
+}
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -96,7 +136,17 @@ function statusLabel(row){
                     </div>
             </div>
             <div class="bg-white shadow-sm mt-2 rounded-sm">
-                <p class="p-4 text-xs">Batches loaded: {{ stockLevels.length }}</p>
+                <div class="flex items-center justify-between ">
+                    <div class="flex items-center justify-start gap-2 p-4 text-xs text-gray-600">
+                        <label class="flex items-center ">Show</label>
+                        <select v-model="pageSize" class="gap-2 px-2 py-1 font-medium border border-gray-300 rounded-sm">
+                            <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                                {{ size }}
+                            </option>
+                        </select>
+                        <span>entries</span>
+                    </div>
+                </div>
                 <table class="w-full text-sm text-left">
                     <thead class="border-b border-gray-200 text-sm tracking-wide">
                         <tr>
@@ -105,6 +155,7 @@ function statusLabel(row){
                             <td class="px-4 py-3 font-medium">Quantity</td>
                             <td class="px-4 py-3 font-medium">Value</td>
                             <td class="px-4 py-3 font-medium">Expiry Date</td> 
+                            <td class="px-4 py-3 font-medium">Status</td>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
@@ -118,8 +169,8 @@ function statusLabel(row){
                                 No stock found...
                             </td>
                         </tr>
-                        <tr v-for="(row, index) in rows" :key="row.id" class="text-xs text-gray-600">
-                            <td class="px-4 py-3">{{ index + 1 }}</td>
+                        <tr v-for="(row, index) in paginatedRows" :key="row.id" class="text-xs text-gray-600">
+                            <td class="px-4 py-3">{{(currentPage -1)*pageSize+ index + 1 }}</td>
                             <td class="px-4 py-3">
                                 <div class="text-gray-600">{{ row.batch_number }}</div>
                                 <div class="text-green-600">{{ row.product }}</div>
@@ -131,14 +182,34 @@ function statusLabel(row){
                                     <span :style="{ color: statusStyles[row.status].color }">
                                         {{ row.expiry_date }}
                                     </span>
-                                    <span class="rounded-sm px-2 py-1 " :style="statusStyles[row.status]">
-                                        {{ statusLabel(row) }}
-                                    </span>
                                 </div>
                             </td>
+                            <td class="px-4 py-3 font-medium"><span class="rounded-sm px-2 py-1 " :style="statusStyles[row.status]">
+                                        {{ statusLabel(row) }}
+                                    </span></td>
                         </tr>
                     </tbody>
                 </table>
+                <div class="flex items-center justify-between p-3 text-xs">
+                    <p class="p-4 text-xs">Total Batches: {{ stockLevels.length }}</p>
+                    <div class="ml-auto flex items-center gap-2">
+                        <ChevronsLeft class="w-4 h-4" />
+                        <button
+                            v-for="page in visiblePageNumbers"
+                            :key="page"
+                            type="button"
+                            @click="goToPage(page)"
+                            :class="[
+                                'flex h-7 w-7 items-center justify-center rounded-full border text-xs cursor-pointer',
+                                page === currentPage
+                                    ? 'border-green-600 bg-green-600 text-white'
+                                    : 'border-gray-300 hover:bg-gray-100'
+                            ]">
+                            {{ page }}
+                        </button>
+                        <ChevronsRight class="w-4 h-4" />
+                    </div>
+                </div>
             </div>
         </div>
     </div>
