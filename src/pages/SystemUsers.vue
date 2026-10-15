@@ -2,7 +2,7 @@
 </script>
 <template>
     <div class="min-h-screen w-full">
-        <div class="max-w-7xl h-full max-auto flex-col overflow-y-auto pb-5 p-2">
+        <div class="h-full max-auto flex-col  pb-5 p-2">
             <div class="flex items-center justify-between  px-2 py-1">
                 <div>
                     <h2 class="font-medium uppercase text-sm flex items-center gap-2">System Users</h2>
