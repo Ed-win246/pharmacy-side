@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X, Wallet, Folder} from 'lucide-vue-next';
+import { LayoutDashboard, Package, Settings, ChevronDown,Tag, Ruler, Pill, FolderArchive,PlusCircle,ShoppingCart,Layers,Database,GitCompare,Eye,Truck,AlertTriangle,BarChart3,LogOut,X, Wallet, Folder, ShoppingBasket} from 'lucide-vue-next';
 
 const props = defineProps({
     isOpen: {
@@ -44,7 +44,8 @@ const inventoryItems = [
     { name: 'Reconcile Stock', icon: GitCompare, route: '/reconcilestock' },
     { name: 'View Stock', icon: Eye, route: '/viewstock' },
     { name: 'System Suppliers', icon: Truck, route: '/suppliers' },
-    { name: 'Expired Stock', icon: AlertTriangle, route: '/expiredstock' }
+    { name: 'Expired Stock', icon: AlertTriangle, route: '/expiredstock' },
+    {name:'Purchase Orders',icon: ShoppingBasket,route:'/purchaseorders'}
 ];
 const settingsItems=[
     {name:'System Users', route:'/users'},
