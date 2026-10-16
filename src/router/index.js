@@ -29,6 +29,7 @@ import AddExpense from "@/pages/AddExpense.vue";
 import Addsales from "@/pages/Addsales.vue";
 import Customers from "@/pages/Customers.vue";
 import Viewsales from "@/pages/Viewsales.vue";
+import PurchaseOrders from "@/pages/PurchaseOrders.vue";
 
 const routes = [
     { 
@@ -72,7 +73,8 @@ const routes = [
             {path:'expenseitems',name:'expenseitems', component: ExpenseItems},
             {path:'sellproduct',name:'sellproducts',component: Addsales},
             {path:'customers',name:'customers',component:Customers},
-            {path:'viewsales',name:'viewsales',component:Viewsales}
+            {path:'viewsales',name:'viewsales',component:Viewsales},
+            {path:'purchaseorders',name:'purchaseorders',component:PurchaseOrders}
         ],
     },
     { 
