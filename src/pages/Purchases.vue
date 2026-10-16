@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
-import { Banknote, Check, Eye, X, ChevronsLeft, ChevronsRight,Search } from 'lucide-vue-next';
+import { Banknote, Check, Eye, X, ChevronsLeft, ChevronsRight,Search, Plus } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { usePurchaseStore } from '@/stores/purchaseStore';
 
