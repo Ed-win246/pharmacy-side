@@ -1,6 +1,6 @@
 <script setup>
 import {ref, reactive, onMounted,computed} from 'vue'
-import { Plus, Printer, Trash2, X } from 'lucide-vue-next';
+import { Plus, Printer, Trash2, X , Eye} from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { usePurchaseStore } from '@/stores/purchaseStore';
@@ -51,7 +51,7 @@ onMounted(()=>{
 const orderForm = reactive({
     supplier:'',
     payment_option:'',
-    expected_date:'',
+    expectedDate:'',
 })
 //product line
 const orderLine = ref([])
@@ -113,7 +113,7 @@ function removeLine(index){
 function openOrderModal(){
     orderForm.supplier = '';
     orderForm.payment_option = '';
-    orderForm.expected_date = '';
+    orderForm.expectedDate = '';
     orderLine.value = [blankLine()];
     showOrderModal.value = true;
 }
@@ -127,6 +127,9 @@ function validateOrder(){
     if(!orderForm.supplier) return 'Select a supplier';
 
     const seen = new Set();
+    if (orderForm.expectedDate && orderForm.expectedDate < todayLocal()) {
+        return 'Expected date cannot be before today';
+    }
 
     for(let i =0;i<orderLine.value.length;i++){
         const line = orderLine.value[i];
@@ -160,27 +163,34 @@ async function saveOrder(){
         return;
     }
     savingOrder.value = true;
-
     try{
-        const {data} = await api.post('/purchase-orders',{
-        supplier:orderForm.supplier,
-        payment_option:orderForm.payment_option,
-        expected_date: orderForm.expected_date || null,
-        items:orderLine.value.map((line)=>({
-            medicine_name:line.medicine_name,
-            unit_name:line.unit_name,
-            quantity:Number(line.quantity),
-            unit_cost:Number(line.unit_cost),
+        const items = orderLine.value.map((line) => ({
+            medicine: line.medicine_name.trim(),
+            medicine_name: line.medicine_name.trim(),
+            unit_name: line.unit_name,
+            quantity: Number(line.quantity),
+            unit_cost: Number(line.unit_cost),
             total_price: Number(line.quantity) * Number(line.unit_cost),
-        })),
-    });
+        }));
+        const { data } = await api.post('/purchase-orders', {
+            supplier: orderForm.supplier,
+            medicine_name: items[0]?.medicine_name,
+            payment_option: orderForm.payment_option || null,
+            expected_date: orderForm.expectedDate || null,
+            items,
+        });
 
     toast.success(data?.message || 'Purchase order placed successfully');
     showOrderModal.value = false;
     await fetchPurchaseOrders();
     }catch(error){
         console.error('Failed to place purchase order',error);
-        toast.error('Failed to place purchase order');
+        const validationErrors = Object.values(error.response?.data?.errors ?? {}).flat();
+        toast.error(
+            validationErrors[0] ||
+            error.response?.data?.message ||
+            'Failed to place purchase order'
+        );
     }finally{
         savingOrder.value = false;
     }
@@ -201,6 +211,7 @@ async function fetchPurchaseOrders() {
 
 const orderDate = (value) => (value ? new Date(value).toLocaleDateString() : '');
 const expectedDate = (value)=>(value? new Date(value).toLocaleDateString():'');
+
 const money = (value) => Number(value || 0).toLocaleString();
 const pharmacyName = computed(() =>
     loggedUser.value?.pharmacy_name ||
@@ -213,13 +224,6 @@ function itemsForOrder(order) {
     const items = order?.items ?? order?.order_items ?? order?.purchase_order_items ?? order?.lines;
     if (Array.isArray(items)) return items;
     return order?.medicine_name ? [order] : [];
-}
-
-function productSummary(order) {
-    const items = itemsForOrder(order);
-    if (items.length === 0) return order?.medicine_name || '—';
-    const firstName = items[0].medicine_name ?? items[0].product?.name ?? items[0].name ?? 'Product';
-    return items.length > 1 ? `${firstName} (+${items.length - 1} more)` : firstName;
 }
 
 function orderTotal(order) {
@@ -252,6 +256,15 @@ async function openReceipt(order) {
 function printReceipt() {
     window.print();
 }
+
+function todayLocal() {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2,'0');
+    const day = String(date.getDate()).padStart(2,'0');
+
+    return `${year}-${month}-${day}`;
+}
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -275,7 +288,7 @@ function printReceipt() {
                 </button>
             </div>
 
-            <div class="mt-2 bg-white shadow-sm rounded-sm overflow-x-auto">
+            <div class="mt-2 bg-white shadow-sm rounded-sm overflow-x-auto mt-4">
                 <table class="w-full text-left text-xs">
                     <thead class="tracking-wide border-b border-gray-200 text-black">
                         <tr>
@@ -303,13 +316,21 @@ function printReceipt() {
                             <td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
                             <td class="px-4 py-3 font-medium">{{ p.order_id ?? p.order_number ?? p.id ?? '—' }}</td>
                             <td class="px-4 py-3 font-medium">{{ p.supplier?.name ?? p.supplier ?? '—' }}</td>
-                            <td class="px-4 py-3 font-medium">{{ productSummary(p) }}</td>
+                            <td class="px-4 py-3 font-medium">
+                                <div v-if="itemsForOrder(p).length" class="flex flex-col gap-1">
+                                    <span v-for="(item, itemIndex) in itemsForOrder(p)"
+                                        :key="item.id ?? `${item.medicine_name ?? item.name}-${itemIndex}`">
+                                        {{ item.medicine_name ?? item.product?.name ?? item.name ?? '—' }}
+                                    </span>
+                                </div>
+                                <span v-else>{{ p.medicine_name ?? '—' }}</span>
+                            </td>
                             <td class="px-4 py-3 font-medium">{{ orderDate(p.order_date ?? p.orderDate ?? p.created_at) }}</td>
                             <td class="px-4 py-3 font-medium">{{ expectedDate(p.expected_date ?? p.expectedDate) }}</td>
                             <td class="px-4 py-3">
                                 <button @click="openReceipt(p)" type="button"
                                     class="rounded-sm bg-[#0b0b45] px-3 py-1.5 text-xs font-medium text-white hover:bg-opacity-90">
-                                    View
+                                    <Eye class="w-4 h-4"/>
                                 </button>
                             </td>
                         </tr>
@@ -338,7 +359,7 @@ function printReceipt() {
                         </div>
                         <div>
                             <label for="po-payment" class="block text-sm font-medium text-gray-700">
-                                Payment Option <span class="text-xs font-normal text-gray-400">(optional)</span>
+                                Payment Option 
                             </label>
                             <select id="po-payment" v-model="orderForm.payment_option"
                                 class="mt-2 w-full rounded-md border border-gray-400 px-3 py-2 text-sm">
@@ -348,7 +369,7 @@ function printReceipt() {
                         </div>
                         <div>
                             <label for="po-expected-date" class="block text-sm font-medium text-gray-700">Expected Date</label>
-                            <input id="po-expected-date" v-model="orderForm.expected_date" type="date"
+                            <input id="po-expected-date" v-model="orderForm.expectedDate" type="date" :min="todayLocal()"
                                 class="mt-2 w-full rounded-md border border-gray-400 px-3 py-2 text-sm" />
                         </div>
                     </div>
@@ -429,7 +450,7 @@ function printReceipt() {
             </div>
 
             <div v-if="showReceiptModal && selectedOrder"
-                class="receipt-overlay no-print fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+                class="receipt-overlay no-print fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-md">
                 <div class="receipt-print max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-sm bg-white p-6 shadow-xl">
                     <div class="receipt-no-print mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-sm font-semibold">Purchase Order Receipt</h3>
