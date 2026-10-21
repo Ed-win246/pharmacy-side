@@ -1,6 +1,6 @@
 <script setup>
 import {ref, reactive, onMounted,computed} from 'vue'
-import { Plus, Printer, Trash2, X , Eye} from 'lucide-vue-next';
+import { Plus, Printer, Trash2, X , EllipsisVertical, Eye, SquarePen} from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { usePurchaseStore } from '@/stores/purchaseStore';
@@ -111,6 +111,7 @@ function removeLine(index){
 }
 
 function openOrderModal(){
+    editingId.value = null;// the new purchase modal doesnt open in editing mode
     orderForm.supplier = '';
     orderForm.payment_option = '';
     orderForm.expectedDate = '';
@@ -121,13 +122,14 @@ function openOrderModal(){
 function closeOrderModal(){
     if(savingOrder.value) return;
     showOrderModal.value = false;
+    editingId.value = null;//so that the modal closes
 }
 
 function validateOrder(){
     if(!orderForm.supplier) return 'Select a supplier';
 
     const seen = new Set();
-    if (orderForm.expectedDate && orderForm.expectedDate < todayLocal()) {
+    if (!isEditing.value && orderForm.expectedDate && orderForm.expectedDate < todayLocal()) {//doont edit old dates
         return 'Expected date cannot be before today';
     }
 
@@ -172,16 +174,21 @@ async function saveOrder(){
             unit_cost: Number(line.unit_cost),
             total_price: Number(line.quantity) * Number(line.unit_cost),
         }));
-        const { data } = await api.post('/purchase-orders', {
+        const payLoad =  {
             supplier: orderForm.supplier,
             medicine_name: items[0]?.medicine_name,
             payment_option: orderForm.payment_option || null,
             expected_date: orderForm.expectedDate || null,
             items,
-        });
+        };
+
+        const {data} = isEditing.value
+        ? await api.put(`/purchase-orders/${editingId.value}`,payLoad) 
+        :await api.post(`/purchase-orders`,payLoad);
 
     toast.success(data?.message || 'Purchase order placed successfully');
     showOrderModal.value = false;
+    editingId.value = null;//dont call the editing modal
     await fetchPurchaseOrders();
     }catch(error){
         console.error('Failed to place purchase order',error);
@@ -265,6 +272,119 @@ function todayLocal() {
 
     return `${year}-${month}-${day}`;
 }
+
+function formatOrderDateTime(value){
+    if(!value) return '-';
+
+    const date = new Date(value);
+    if(Number.isNaN(date.getTime())) return '-';
+
+    return date.toLocaleString(undefined,{
+        dateStyle: 'medium',
+        timeStyle:'short'
+    })
+}//edit, update , delete state
+const editingId =  ref(null)
+const isEditing = computed(()=>editingId.value !== null);
+// Load the saved order values into the same form used to create an order.
+async function openEditModal(order) {
+    let orderDetails = order;
+    if (!itemsForOrder(order).length && order.id) {
+        try {
+            const { data } = await api.get(`/purchase-orders/${order.id}`);
+            orderDetails = data?.data ?? data;
+        } catch (error) {
+            console.error('Failed to load purchase order for editing', error);
+            toast.error(error.response?.data?.message || 'Failed to load purchase order for editing');
+            return;
+        }
+    }
+
+    const orderItems = itemsForOrder(orderDetails);
+    editingId.value = orderDetails.id ?? order.id;
+    orderForm.supplier = orderDetails.supplier?.name ?? orderDetails.supplier_name ?? orderDetails.supplier ?? '';
+    orderForm.payment_option = orderDetails.payment_option ?? '';
+    orderForm.expectedDate = String(
+        orderDetails.expectedDate ?? orderDetails.expected_date ?? orderDetails.expected_delivery_date ?? ''
+    ).slice(0, 10);
+    orderLine.value = orderItems.map((item) => {
+        const medicine = item.medicine ?? item.product;
+        const medicineName = item.medicine_name ??
+            (typeof medicine === 'string' ? medicine : medicine?.name) ??
+            item.name ??
+            medicines.value.find((entry) => Number(entry.id) === Number(item.medicine_id ?? item.product_id))?.name ??
+            '';
+        const unit = item.unit;
+        const unitName = item.unit_name ??
+            (typeof unit === 'string' ? unit : unit?.unit_name ?? unit?.name) ??
+            units.value.find((entry) => Number(entry.id) === Number(item.unit_id))?.unit_name ??
+            '';
+
+        return {
+            id: ++lineId,
+            medicine_name: medicineName,
+            quantity: Number(item.quantity ?? 0),
+            unit_name: unitName,
+            unit_cost: Number(item.unit_cost ?? item.price_per_unit ?? item.buying_price ?? 0),
+            total: '',
+        };
+    });
+    if (!orderLine.value.length) orderLine.value = [blankLine()];
+    showOrderModal.value = true;
+}
+
+const menu = reactive({ open: false, order: null, top: 0, left: 0 });
+let menuTimer = null;
+
+function openMenu(event, order){
+    clearTimeout(menuTimer);
+    const r = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 112;
+    menu.order = order;
+    menu.left = Math.max(8, r.right - 144);
+    menu.top = r.bottom + menuHeight > window.innerHeight ? r.top - menuHeight - 4 : r.bottom + 4;
+    menu.open = true;
+}
+function keepMenu(){ clearTimeout(menuTimer); }
+function scheduleCloseMenu(){
+    clearTimeout(menuTimer);
+    menuTimer = setTimeout(() => { menu.open = false; }, 150);
+}
+function closeMenu(){ clearTimeout(menuTimer); menu.open = false; }
+
+//delete logic
+const showDeleteModal = ref(false);
+const orderToDelete = ref(null);
+const deleting = ref(false);
+
+function askDelete(order){
+    closeMenu();
+    showDeleteModal.value = true;
+    orderToDelete.value = order;
+}
+
+async function deleteItem(item){
+    if(deleting.value) return;
+    if(itemsForOrder(orderToDelete.value).length <= 1){
+        toast.error('An order needs atleast one product..');
+        return;
+    }
+   // if(!confirm(`Remove ${item.medicine_name} from this order`)) return;
+
+   deleting.value = true;
+   try{
+    const orderId = orderToDelete.value.id;
+    const {data} = await api.delete(`/purchase-orders/${orderId}/items/${item.id}`);
+    toast.success(data?.message || 'Order product removed from the order list');
+    await fetchPurchaseOrders();
+    orderToDelete.value = purchaseOrders.value.find((o)=> o.id === orderId)??null;
+    if(!orderToDelete.value ) showDeleteModal.value = false; 
+   }catch(error){
+    toast.error(error.response?.data?.message || 'Failed to remove order product');
+   }finally{
+    deleting.value = false;
+   }
+}
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -287,7 +407,9 @@ function todayLocal() {
                 <Plus class="w-4 h-4 shrink-0 "/>New Purchase Order
                 </button>
             </div>
+            
 
+            
             <div class="mt-2 bg-white shadow-sm rounded-sm overflow-x-auto mt-4">
                 <table class="w-full text-left text-xs">
                     <thead class="tracking-wide border-b border-gray-200 text-black">
@@ -327,10 +449,19 @@ function todayLocal() {
                             </td>
                             <td class="px-4 py-3 font-medium">{{ orderDate(p.order_date ?? p.orderDate ?? p.created_at) }}</td>
                             <td class="px-4 py-3 font-medium">{{ expectedDate(p.expected_date ?? p.expectedDate) }}</td>
-                            <td class="px-4 py-3">
+                            <!-- <td class="px-4 py-3">
                                 <button @click="openReceipt(p)" type="button"
                                     class="rounded-sm bg-[#0b0b45] px-3 py-1.5 text-xs font-medium text-white hover:bg-opacity-90">
-                                    <Eye class="w-4 h-4"/>
+                                    <EllipsisVertical class="w-4 h-4"/>
+                                </button>
+                            </td> -->
+                            <td class="px-4 py-3">
+                                <button type="button"
+                                    @mouseenter="openMenu($event, p)"
+                                    @mouseleave="scheduleCloseMenu"
+                                    @click="openMenu($event, p)"
+                                    class="rounded-sm bg-[#0b0b45] px-3 py-1.5 text-xs font-medium text-white hover:bg-opacity-90 cursor-pointer">
+                                    <EllipsisVertical class="w-4 h-4"/>
                                 </button>
                             </td>
                         </tr>
@@ -338,10 +469,76 @@ function todayLocal() {
                 </table>
             </div>
 
+            <div v-if="menu.open" 
+                :style="{top: menu.top + 'px', left:menu.left  + 'px'}"
+                @mouseenter="keepMenu" @mouseleave="scheduleCloseMenu"
+                class="fixed  z-50 w-36 rounded-sm border border-gray-200 bg-white shadow-lg ">
+                <button type="button" @click="openReceipt(menu.order); closeMenu()"
+                class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-blue-600 cursor-pointer hover:bg-gray-100">
+                <Eye class="w-4 h-4"/>View
+                </button>
+                <button type="button" @click="openEditModal(menu.order); closeMenu()"
+                class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-green-600 cursor-pointer hover:bg-gray-100">
+                <SquarePen class="w-4 h-4"/>Update
+                </button>
+                <button type="button" @click="askDelete(menu.order); closeMenu()"
+                class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-red-600  cursor-pointer hover:bg-gray-100">
+                <Trash2 class="w-4 h-4"/>Delete
+                </button>
+            </div>
+
+            <!--delete modal-->
+            <div v-if="showDeleteModal && orderToDelete" class="fixed inset-0 z-50 bg-black/50 backdrop-md flex items-center justify-center ">
+                <div class="bg-white max-w-4xl shadow-sm  max-h-[80vh] rounded-sm w-full overflow-y-auto space-y-4 p-4">
+                    <div class="flex items0center justify-between border-b border-gray-200 pb-3">
+                        <h3 class="text-sm font-medium">
+                            Delete Purchase Order   <span class="font-medium text-xs">{{ orderToDelete.order_number ?? orderToDelete.id }}</span>
+                        </h3>
+                        <button @click="showDeleteModal = false" class="text-gray-400 cursor-pointer">
+                            <X class="w-4 h-4 "/>
+                        </button>
+                    </div>
+
+                    <table class="text-left w-full text-sm">
+                        <thead class="border-b border-gray-200 text-xs text-gray-600">
+                            <tr>
+                                <th class="px-4 py-3 font-medium">#</th>
+                                <th class="px-4 py-3 font-medium">Product</th>
+                                <th class="px-4 py-3 font-medium">Base Unit</th>
+                                <th class="px-4 py-3 font-medium">Quantity</th>
+                                <th class="px-4 py-3 font-medium">Unit Cost</th>
+                                <th class="px-4 py-3 font-medium">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr v-for="(item, index) in itemsForOrder(orderToDelete)" :key="item.id">
+                                <td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
+                                <td class="px-4 py-3 font-medium">{{ item.medicine_name }}</td>
+                                <td class="px-4 py-3 font-medium">{{ item.unit_name }}</td>
+                                <td class="px-4 py-3 font-medium">{{ item.quantity }}</td>
+                                <td class="px-4 py-3 font-medium">{{ money(item.unit_cost) }}</td>
+                                <td class="px-4 py-3">
+                                    <button @click="deleteItem(item)" type="button" :disabled="deleting"
+                                    class="bg-red-600 text-white px-3 py-1.5 rounded-sm flex items-center cursor-pointer">
+                                    <Trash2 class="w-4 h-4"/></button> 
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                           <div class="flex items-center justify-end border-t border-gray-200">
+                            <button @click="showDeleteModal = false" type="button"
+                            class="bg-gray-600 text-white px-3 py-1.5 rounded-sm mt-2 text-sm cursor-pointer">Cancel
+                            </button>
+                        </div>
+                </div>
+            </div>
+
             <div v-if="showOrderModal" class="inset-0 fixed z-50 backdrop-md items-center justify-center flex bg-black/50">
-                <div class="w-full max-w-5xl bg-white shadow-sm overflow-y-auto space-y-4 p-4 rounded-sm">
+                <div class="w-full max-w-6xl  bg-white shadow-sm overflow-y-auto space-y-4 p-4 rounded-sm">
                     <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <h3 class="text-sm font-medium">Purchase Order</h3>
+                        <h3 class="text-sm font-medium">
+                            {{ isEditing ? 'Edit Purchase Order' : 'Create Purchase Order' }}
+                        </h3>
                         <button @click="closeOrderModal" class="text-gray-500 cursor-pointer" type="button"
                             aria-label="Close purchase order">
                             <X class="w-4 h-4" />
@@ -443,7 +640,7 @@ function todayLocal() {
                         </button>
                         <button @click="saveOrder" :disabled="savingOrder" type="button"
                             class="flex w-full items-center justify-center gap-2 rounded-sm bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 sm:w-auto">
-                            {{ savingOrder ? 'Saving...' : 'Create Purchase Order' }}
+                            {{ savingOrder ? 'Saving...': (isEditing?'Update Order' : 'Create Purchase Order') }}
                         </button>
                     </div>
                 </div>
@@ -451,7 +648,7 @@ function todayLocal() {
 
             <div v-if="showReceiptModal && selectedOrder"
                 class="receipt-overlay no-print fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-md">
-                <div class="receipt-print max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-sm bg-white p-6 shadow-xl">
+                <div class="receipt-print max-h-[80vh] w-full max-w-6xl overflow-y-auto rounded-sm bg-white p-6 shadow-xl">
                     <div class="receipt-no-print mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
                         <h3 class="text-sm font-semibold">Purchase Order Receipt</h3>
                         <button @click="showReceiptModal = false" type="button" aria-label="Close receipt"
@@ -470,18 +667,29 @@ function todayLocal() {
                     </div>
                     <template v-else>
                         <div class="mb-6 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                            <p><span class="font-semibold">Order ID:</span>
-                                {{ selectedOrder.order_id ?? selectedOrder.order_number ?? selectedOrder.id ?? '—' }}
-                            </p>
-                            <p><span class="font-semibold">Supplier:</span>
-                                {{ selectedOrder.supplier?.name ?? selectedOrder.supplier ?? '—' }}
-                            </p>
-                            <p><span class="font-semibold">Order date:</span>
-                                {{ orderDate(selectedOrder.order_date ?? selectedOrder.orderDate ?? selectedOrder.created_at) || '—' }}
-                            </p>
-                            <p><span class="font-semibold">Expected date:</span>
-                                {{ expectedDate(selectedOrder.expected_date ?? selectedOrder.expectedDate) || '—' }}
-                            </p>
+                            <div class="flex flex-col items-start gap-1">
+                                    <p>
+                                    <span class="font-semibold">Order date:</span>
+                                    {{ formatOrderDateTime(selectedOrder.created_at ?? selectedOrder.order_date ?? selectedOrder.orderDate) }}
+                                </p>
+                                <p>
+                                    <span class="font-semibold">Expected date:</span>
+                                    {{ expectedDate(selectedOrder.expected_date ?? selectedOrder.expectedDate) || '—' }}
+                                </p>
+               
+                            </div>
+                            
+                            <div class="flex flex-col items-start gap-2 sm:items-end">
+                                  <p>
+                                    <span class="font-semibold">Supplier:</span>
+                                    {{ selectedOrder.supplier?.name ?? selectedOrder.supplier ?? '—' }}
+                                </p>
+                                <p>
+                                    <span class="font-semibold">Order ID:</span>
+                                    {{ selectedOrder.order_id ?? selectedOrder.order_number ?? selectedOrder.id ?? '—' }}
+                                </p>
+                            </div>
+                      
                         </div>
 
                         <div class="overflow-x-auto">
@@ -535,7 +743,7 @@ function todayLocal() {
                             </button>
                             <button @click="printReceipt" type="button"
                                 class="inline-flex items-center gap-2 rounded-sm bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700">
-                                <Printer class="h-4 w-4" /> Print receipt
+                                <Printer class="h-4 w-4" /> Print
                             </button>
                         </div>
                     </template>
