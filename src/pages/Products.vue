@@ -328,13 +328,7 @@ function downloadFile(blobData, filename){
       </button>
     </div>
 
-    <div class="flex flex-wrap items-center justify-end pt-4 px-4 gap-2">
-      <button @click="exportMedicines"
-          type="button"
-          class="flex items-center gap-2 rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 cursor-pointer">
-        <Download class="w-4 h-4"/> Export
-      </button>
-    </div>
+  
 
     <!-- Page size (left) + search (right) -->
     <div class="flex items-center justify-between gap-4">
@@ -346,7 +340,14 @@ function downloadFile(blobData, filename){
         <span>entries</span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 justify-end">
+          
+      <button @click="exportMedicines"
+          type="button"
+          class="flex items-center gap-2 rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 cursor-pointer">
+        <Download class="w-4 h-4"/> Export
+      </button>
+    
         <span class="text-sm whitespace-nowrap font-medium">Search :</span>
       <div class="relative w-full max-w-[200px]">
        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
