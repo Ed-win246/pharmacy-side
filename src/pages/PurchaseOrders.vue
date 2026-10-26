@@ -1,6 +1,6 @@
 <script setup>
 import {ref, reactive, onMounted,computed} from 'vue'
-import { Plus, Printer, Trash2, X , EllipsisVertical, Eye, SquarePen} from 'lucide-vue-next';
+import { Plus, Printer, Trash2, X , EllipsisVertical, Eye, SquarePen,PackageCheck} from 'lucide-vue-next';
 import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { usePurchaseStore } from '@/stores/purchaseStore';
@@ -384,7 +384,116 @@ async function deleteItem(item){
    }finally{
     deleting.value = false;
    }
+}//status logic 
+const activeTab = ref('all')
+const tabs = [
+    {key:'all', label:'All'},
+    {key:'pending',label:'Pending'},
+    {key:'partial',label:'Partial'},
+    {key:'completed',label:'Completed'},
+]
+
+const statusOf = (o)=>o.status ?? 'pending'
+
+const filteredOrders = computed(() =>
+    activeTab.value === 'all'
+        ? purchaseOrders.value
+        : purchaseOrders.value.filter((order) => statusOf(order) === activeTab.value)
+)
+
+const tabCount=(key)=>
+    key === 'all'
+    ?purchaseOrders.value.length
+    :purchaseOrders.value.filter((o)=>statusOf(o) === key).length
+
+function receivedSummary(order){
+    const items = itemsForOrder(order);
+    const ordered = items.reduce((s,i)=>s + Number(i.quantity || 0),0);
+    const received = items.reduce((s,i)=>s + Number(i.quantity_received || 0),0);
+    return `${received}/${ordered}`;
+} 
+//receive logic
+const showReceieveModal = ref(false)
+const receiving = ref(false)
+const receiveOrder = ref(null)
+const receiveLines = ref([])
+
+const remainingOf = (l)=>l.ordered - l.received
+function receiveBatchStorageKey(orderId, itemId) {
+    return `purchase-order:${orderId}:item:${itemId}:batch-number`;
 }
+
+function rememberedReceiveBatch(orderId, itemId) {
+    try {
+        return localStorage.getItem(receiveBatchStorageKey(orderId, itemId)) || '';
+    } catch (error) {
+        console.error('Failed to retrieve saved batch number', error);
+        toast.error('Could not retrieve the saved batch number');
+        return '';
+    }
+}
+
+function openReceiveModal(order){
+    closeMenu();
+    receiveOrder.value = order;
+    receiveLines.value = itemsForOrder(order).map((i)=>({
+        id:i.id,
+        medicine_name:i.medicine_name,
+        unit_name:i.unit_name,
+        ordered:Number(i.quantity || 0),
+        received:Number(i.quantity_received || 0),
+        receive_now:0,
+        batch_number:i.batch_number || rememberedReceiveBatch(order.id, i.id),
+    }));
+    showReceieveModal.value = true;
+}
+
+
+async function saveReceive(){
+    if(receiving.value) return;
+
+    for(const l of receiveLines.value){
+        const n = Number(l.receive_now)
+        if(!Number.isInteger(n) || n<0) return toast.error(`${l.medicine_name}:enter a whole number`)
+        if(n>remainingOf(l)) return toast.error(`${l.medicine_name}:only${remainingOf(l)} left to receive`)
+        if(n>0 && !String(l.batch_number).trim()) return toast.error(`${l.medicine_name}: enter a batch number`)
+    }
+    if(!receiveLines.value.some((l)=>Number(l.receive_now)>0)){
+        return toast.error('Enter at least one recieved quantity for a product');
+    }
+    receiving.value = true;
+    try{
+        const {data} = await api.post(`purchase-orders/${receiveOrder.value.id}/receive`,{
+            items:receiveLines.value
+            .filter((l)=>Number(l.receive_now)>0)
+            .map((l)=>({
+                id:l.id,
+                receive_now:Number(l.receive_now),
+                batch_number:l.batch_number.trim(),
+            })),
+        });
+        try {
+            receiveLines.value
+                .filter((l)=>Number(l.receive_now)>0)
+                .forEach((l)=>localStorage.setItem(
+                    receiveBatchStorageKey(receiveOrder.value.id, l.id),
+                    l.batch_number.trim(),
+                ));
+        } catch (error) {
+            console.error('Failed to remember received batch number', error);
+            toast.error('Stock was received');
+        }
+        toast.success(data?.message || 'Stock received successfully');
+        showReceieveModal.value = false;
+        await fetchPurchaseOrders();
+        if(activeTab.value !== 'all' )activeTab.value = data?.data?.status??activeTab.value;
+    }catch(error){
+        const errors= Object.values(error.response?.data?.errors??{}).flat();
+        toast.error(errors[0] || error.response?.data?.message || 'Failed to receive stock ');
+    }finally{
+        receiving.value = false;
+    }
+}    
 </script>
 <template>
     <div class="min-h-screen w-full">
@@ -408,7 +517,17 @@ async function deleteItem(item){
                 </button>
             </div>
             
-
+            <div class="flex gap-2 px-4 mt-4">
+                <button v-for="t in tabs" :key="t.key" 
+                    type="button"  
+                    @click="activeTab = t.key"
+                    :class="activeTab === t.key
+                    ?'bg-[#7393B3] text-black'
+                    :'text-black text-gray-500 border border-gray-300'"
+                    class="rounded-sm px-4 py-1.5 font-medium text-xs cursor-pointer">
+                    {{ t.label }} ({{ tabCount(t.key) }})
+                </button>
+            </div>
             
             <div class="mt-2 bg-white shadow-sm rounded-sm overflow-x-auto mt-4">
                 <table class="w-full text-left text-xs">
@@ -420,6 +539,8 @@ async function deleteItem(item){
                             <th class="px-4 py-3 font-medium">Product</th>
                             <th class="px-4 py-3 font-medium">Order date</th>
                             <th class="px-4 py-3 font-medium">Expected Date</th>
+                            <th class="px-4 py-3 font-medium">Status</th>
+                            <th class="px-4 py-3 font-medium">Received</th>
                             <th class="px-4 py-3 font-medium">Actions</th>
                         </tr>
                     </thead>
@@ -429,12 +550,12 @@ async function deleteItem(item){
                                 Loading purchase orders...
                             </td>
                         </tr>
-                        <tr v-else-if="purchaseOrders.length === 0">
+                        <tr v-else-if="filteredOrders.length === 0">
                             <td class="px-4 py-12 text-center" colspan="7">
-                                No purchase orders found...
+                                {{ activeTab === 'all' ? 'No purchases found..' : `No ${activeTab} orders found` }}
                             </td>
                         </tr>
-                        <tr v-for="(p,index) in purchaseOrders" :key="p.id ?? index">
+                        <tr v-for="(p,index) in filteredOrders" :key="p.id ?? index">
                             <td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
                             <td class="px-4 py-3 font-medium">{{ p.order_id ?? p.order_number ?? p.id ?? '—' }}</td>
                             <td class="px-4 py-3 font-medium">{{ p.supplier?.name ?? p.supplier ?? '—' }}</td>
@@ -449,12 +570,26 @@ async function deleteItem(item){
                             </td>
                             <td class="px-4 py-3 font-medium">{{ orderDate(p.order_date ?? p.orderDate ?? p.created_at) }}</td>
                             <td class="px-4 py-3 font-medium">{{ expectedDate(p.expected_date ?? p.expectedDate) }}</td>
-                            <!-- <td class="px-4 py-3">
-                                <button @click="openReceipt(p)" type="button"
-                                    class="rounded-sm bg-[#0b0b45] px-3 py-1.5 text-xs font-medium text-white hover:bg-opacity-90">
-                                    <EllipsisVertical class="w-4 h-4"/>
-                                </button>
-                            </td> -->
+                            <td class="px-4 py-3">
+                                <span class="rounded-sm px-2 py-0.5 text-xs font-medium capitalize"
+                                    :class="{
+                                        'bg-yellow-100 text-yellow-700': statusOf(p) === 'pending',
+                                        'bg-blue-100 text-blue-700': statusOf(p) === 'partial',
+                                        'bg-green-100 text-green-700': statusOf(p) === 'completed',
+                                    }">
+                                    {{ statusOf(p) }}
+                                </span>
+                            </td>
+                            <!-- <td class="px-4 py-3 font-medium">{{ receivedSummary(p) }}</td> -->
+                             <td class="px-4 py-3 font-medium">
+                                <div v-if="itemsForOrder(p).length" class="flex flex-col gap-1">
+                                    <span v-for="(item, itemIndex) in itemsForOrder(p)" :key="item.id ?? itemIndex">
+                                    {{ Number(item.quantity_received ?? 0) }}/{{ Number(item.quantity ?? 0) }}
+                                    {{ item.unit_name ?? item.unit?.unit_name ?? '' }}
+                                    </span>
+                                </div>
+                                <span v-else>{{ receivedSummary(p) }}</span>
+                            </td>
                             <td class="px-4 py-3">
                                 <button type="button"
                                     @mouseenter="openMenu($event, p)"
@@ -477,6 +612,10 @@ async function deleteItem(item){
                 class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-blue-600 cursor-pointer hover:bg-gray-100">
                 <Eye class="w-4 h-4"/>View
                 </button>
+                <button type="button" v-if="statusOf(menu.order) !== 'completed'" @click="openReceiveModal(menu.order)"
+                class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-green-600 cursor-pointer hover:bg-gray-100">
+                <PackageCheck class="w-4 h-4"/> Adjust
+               </button>
                 <button type="button" @click="openEditModal(menu.order); closeMenu()"
                 class="flex w-full items-center px-3 py-1.5  gap-2 text-xs text-green-600 cursor-pointer hover:bg-gray-100">
                 <SquarePen class="w-4 h-4"/>Update
@@ -747,6 +886,81 @@ async function deleteItem(item){
                             </button>
                         </div>
                     </template>
+                </div>
+            </div>
+
+            <!--receive modal-->
+            <div v-if="showReceieveModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div class="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-sm bg-white p-4 shadow-lg">
+                    <div class="mb-4 flex items-center justify-between border-b border-gray-300 pb-3">
+                        <h3 class="text-xl font-medium">
+                            Receive Stock For <span class="text-xs">{{ receiveOrder?.order_number ?? receiveOrder?.id ?? '' }}</span>
+                        </h3>
+                        <button type="button" @click="showReceieveModal = false" class="text-gray-400">
+                            <X class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="border-b border-gray-200 text-xs">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">#</th>
+                                    <th class="px-4 py-3 font-medium">Product</th>
+                                    <th class="px-4 py-3 font-medium">Base Unit</th>
+                                    <th class="px-4 py-3 font-medium">Ordered</th>
+                                    <th class="px-4 py-3 font-medium">Received so far</th>
+                                    <th class="px-4 py-3 font-medium">Remaining</th>
+                                    <th class="px-4 py-3 font-medium">Receive Now</th>
+                                    <th class="px-4 py-3 font-medium">Batch Number</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <tr v-for="(l, index) in receiveLines" :key="l.id">
+                                    <td class="px-4 py-3 font-medium">{{ index + 1 }}</td>
+                                    <td class="px-4 py-3 font-medium">{{ l.medicine_name }}</td>
+                                    <td class="px-4 py-3 font-medium">{{ l.unit_name }}</td>
+                                    <td class="px-4 py-3 font-medium">{{ l.ordered }}</td>
+                                    <td class="px-4 py-3 font-medium">{{ l.received }}</td>
+                                    <td class="px-4 py-3 font-medium">{{ remainingOf(l) }}</td>
+                                    <td class="px-4 py-3">
+                                        <input
+                                            v-model.number="l.receive_now"
+                                            type="number"
+                                            min="0"
+                                            :max="remainingOf(l)"
+                                            :disabled="remainingOf(l) === 0"
+                                            class="w-24 rounded-sm border border-gray-200 px-4 py-1.5 text-xs"
+                                        >
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <input type="text"
+                                        v-model="l.batch_number"
+                                        class="w-24 rounded-sm border border-gray-200 px-4 py-1.5 text-xs">
+                                    </td>
+                                </tr>
+                                <tr v-if="receiveLines.length === 0">
+                                    <td colspan="7" class="px-4 py-6 text-center text-gray-500">No items to receive.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex justify-end gap-2 border-t border-gray-200 pt-4">
+                        <button
+                            @click="showReceieveModal = false"
+                            type="button"
+                            class="rounded-sm bg-gray-500 px-4 py-2 text-sm text-white cursor-pointer"
+                        >Cancel</button>
+                        <button
+                            @click="saveReceive"
+                            :disabled="receiving"
+                            type="button"
+                            class="rounded-sm bg-green-600 px-4 py-2 text-sm text-white disabled:opacity-50 cursor-pointer"
+                        >
+                            {{ receiving ? 'Saving...' : 'Receive' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
