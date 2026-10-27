@@ -308,8 +308,19 @@ async function submitImport() {
         </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex flex-wrap items-center justify-end gap-2 px-4 pt-4">
+ 
+
+      <!-- Table + pagination -->
+      <div class="bg-white shadow-sm rounded-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 px-4 pt-4">
+          <div class="flex items-center gap-2 text-xs">
+            <span>Show</span>
+            <select v-model="pageSize" class="w-auto rounded-sm border border-gray-300 px-2 py-1 text-xs">
+              <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+            </select>
+            <span>entries</span>
+          </div>
+          <div class="flex flex-wrap items-center justify-end gap-2">
         <button
           @click="openImportModal"
           type="button"
@@ -342,18 +353,6 @@ async function submitImport() {
           <Plus class="h-4 w-4" />
           New Supplier
         </button>
-      </div>
-
-      <!-- Show entries (left) + search (right) -->
-      <div class="flex items-center justify-between gap-4 px-4 py-4">
-        <div class="flex items-center gap-2 text-xs ">
-          <span>Show</span>
-          <select v-model="pageSize" class="w-auto rounded-sm border border-gray-300 px-2 py-1 text-xs">
-            <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
-          </select>
-          <span>entries</span>
-        </div>
-
         <div class="flex items-center gap-2">
             <span class="font-medium whitespace-nowrap text-sm">Search:</span>
             <div class="relative ml-auto w-full max-w-[220px]">
@@ -373,12 +372,10 @@ async function submitImport() {
             >
                 <X class="h-4 w-4 cursor-pointer" />
             </button>
-            </div>
+              </div>
         </div>
       </div>
-
-      <!-- Table + pagination -->
-      <div class="bg-white shadow-sm rounded-sm">
+      </div>
         <table class="w-full text-left text-sm">
           <thead class="border-b border-gray-200 text-xs tracking-wide text-gray-600">
             <tr>
@@ -461,7 +458,7 @@ async function submitImport() {
       <!-- Register / edit modal -->
       <div
         v-if="showModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-md"
       >
         <div class="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
           <div class="flex items-center justify-between border-b border-gray-200 p-4 sm:p-6">
