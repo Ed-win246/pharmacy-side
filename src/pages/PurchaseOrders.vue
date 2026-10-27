@@ -481,7 +481,7 @@ async function saveReceive(){
                 ));
         } catch (error) {
             console.error('Failed to remember received batch number', error);
-            toast.error('Stock was received');
+            toast.error('Stock was received, but batch number couldnt be got');
         }
         toast.success(data?.message || 'Stock received successfully');
         showReceieveModal.value = false;
