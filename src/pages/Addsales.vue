@@ -30,9 +30,8 @@ const form = reactive({
     quantity: '',
 });
 
-// ====================================================================
+
 // DATA FETCHING
-// ====================================================================
 async function load(url, target, label) {
     try {
         const { data } = await api.get(url);
@@ -275,9 +274,8 @@ const remainingMessage = computed(() => {
     return text;
 });
 
-// ====================================================================
+
 // CART (saved in the database)
-// ====================================================================
 function resetForm() {
     form.medicine = '';
     form.unit_name = '';
@@ -316,13 +314,13 @@ async function addItemToCart() {
         // reload both: the new cart and the reduced stock numbers
         await Promise.all([fetchCartItems(), fetchSystemStock()]);
     } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to add to cart');
+        toast.error(error.response?.data?.message || 'Failed to add item to cart');
     } finally {
         adding.value = false;
     }
 }
 
-// ---- delete one line (with confirmation) ----
+//  delete one item
 const cartItemToDelete = ref(null);
 const deleting = ref(false);
 const showDeleteModal = ref(false);
@@ -344,7 +342,7 @@ async function removeItem() {
         await Promise.all([fetchCartItems(), fetchSystemStock()]);
     } catch (error) {
         console.error('Failed to remove item', error);
-        toast.error(error.response?.data?.message || 'Failed to remove item');
+        toast.error(error.response?.data?.message || 'Failed to remove item from cart');
     } finally {
         deleting.value = false;
     }
@@ -361,9 +359,8 @@ async function clearCart() {
     }
 }
 
-// ====================================================================
+
 // TOTALS + CHECKOUT
-// ====================================================================
 const cartTotal = computed(() =>
     saleItems.value.reduce((total, item) => total + Number(item.unit_price) * Number(item.quantity), 0)
 );
@@ -399,9 +396,8 @@ async function completeSale() {
     }
 }
 
-// ====================================================================
+
 // CUSTOMER (known customer checkbox + new customer modal)
-// ====================================================================
 const useCustomer = ref(false);        // the checkbox
 const showCustomerForm = ref(false);   // opens the customer form
 
@@ -694,21 +690,21 @@ const today = computed(() => formatLocalDate(new Date()));
                 </div>
 
                 <form @submit.prevent="saveNewCustomer" class="space-y-4 sm:p-6">
-                    <div class="grid grid-cols-1 p-4">
+                    <div class="grid grid-cols-1 p-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
                             <input type="text" v-model="customerForm.name" required placeholder="john doe"
                                    class="w-full px-4 py-2 border border-gray-200 placeholder:text-xs rounded-sm">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 p-4">
+                    <div class="grid grid-cols-1 p-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
                             <input type="email" v-model="customerForm.email" required placeholder="example@gmail.com"
                                    class="w-full px-4 py-2 border border-gray-200 placeholder:text-xs rounded-sm">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Contact</label>
                             <input type="tel" v-model="customerForm.contact" required placeholder="123-456-789"
@@ -720,7 +716,7 @@ const today = computed(() => formatLocalDate(new Date()));
                                    class="px-4 py-2 border border-gray-200 w-full placeholder:text-xs rounded-sm">
                         </div>
                     </div>
-                    <div class="flex items-center justify-end gap-2 p-4 border-t border-gray-200">
+                    <div class="flex items-center justify-end gap-2 p-2 border-t border-gray-200">
                         <button type="button" @click="showCustomerForm = false"
                                 class="rounded-sm border border-gray-200 bg-gray-500 cursor-pointer px-4 py-3 flex items-center justify-center text-xs text-white">
                             Cancel
@@ -745,7 +741,7 @@ const today = computed(() => formatLocalDate(new Date()));
                 </div>
 
                 <p class="mt-2 text-sm text-gray-500">
-                    Are you sure you want to delete <strong>{{ cartItemToDelete?.medicine_name }}</strong> from the cart?
+                    Are you sure you want to delete <strong class="text-gray-800">{{ cartItemToDelete?.medicine_name }}</strong> from the cart?
                     The quantity goes back into stock.
                 </p>
                 <div class="mt-4 flex justify-end gap-2 border-t border-gray-200 pt-3">
