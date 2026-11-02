@@ -339,7 +339,7 @@ const pricePerBaseUnit=computed(()=>{
                     <span class="text-gray-400"> / Add Stock</span>
                 </div>
             </div>
-            <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2 bg-white pl-4 pr-4 pt-4 pb-6">
+            <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[2fr_3fr] bg-white pl-4 pr-4 pt-4 pb-6">
                 <!-- Left Column: Add Stock Form -->
                 <div class="bg-white rounded-lg shadow-sm p-5 border border-gray-200">
                     <form @submit.prevent="addItemToList" class="space-y-4">
@@ -417,7 +417,7 @@ const pricePerBaseUnit=computed(()=>{
                     </form>
                 </div>
                 <div>
-                    <div v-if="stockItems.length === 0" class="border-2 border-gray-300 rounded-lg p-10 text-center bg-gray-100 flex flex-col items-center justify-center min-h-[380px] space-y-3">
+                    <div v-if="stockItems.length === 0" class="border-2 border-gray-300 rounded-lg p-10 text-center bg-gray-100 flex flex-col items-center justify-center min-h-[240px] space-y-3">
                         <div class="p-3 bg-gray-100 rounded-full text-gray-400">
                             <PackageOpen class="w-10 h-10 stroke-1 text-green-800" />
                         </div>
