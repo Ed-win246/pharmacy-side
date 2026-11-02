@@ -4,37 +4,8 @@ import api from '@/lib/api';
 import toast from '@tsirosgeorge/toastnotification';
 import { CircleCheck, X} from 'lucide-vue-next';
 
-const systemStock = ref([]);
-// const groupedSystemStock = computed(() => {
-//     const groups = new Map();
+const systemStock = ref([])
 
-//     systemStock.value.forEach((row) => {
-//         const medicineName = String(
-//             row.medicine_name ?? row.name ?? row.medicine ?? ''
-//         ).trim() || 'Unknown';
-//         const key = String(
-//             row.medicine_id ?? row.product_id ?? medicineName.toLowerCase()
-//         );
-
-//         if (!groups.has(key)) {
-//             groups.set(key, {
-//                 key,
-//                 medicine_name: medicineName,
-//                 category: row.category,
-//                 units: [],
-//             });
-//         }
-
-//         const group = groups.get(key);
-//         group.units.push({
-//             ...row,
-//             system_qty: row.system_qty ?? row.quantity,
-//         });
-//     });
-
-//     return [...groups.values()]
-//         .sort((a, b) => a.medicine_name.localeCompare(b.medicine_name));
-// });
 const groupedSystemStock = computed(() => {
     const groups = new Map();
 
@@ -88,34 +59,11 @@ async function fetchSystemStock() {
     } finally {
         loading.value = false;
     }
+    
+   return;
 }
 
-// Runs when Save is clicked: checks the input, then opens the modal
-// function promptUpdate(group, unit) {
-//     const entered = actualQuantities.value[unit.id];
 
-//     if (entered === undefined || entered === null || entered === '') {
-//         toast.error('Enter the actual quantity first');
-//         return;
-//     }
-//     if (!Number.isInteger(Number(entered)) || Number(entered) < 0) {
-//         toast.error('Actual quantity must be a whole number, 0 or more');
-//         return;
-//     }
-//     if (Number(entered) === Number(unit.system_qty)) {
-//         toast.error('Actual quantity matches the system quantity. Nothing to update.');
-//         return;
-//     }
-
-//     selectedItem.value = {
-//         id: unit.id,                        // the stock_items id
-//         medicine_name: group.medicine_name,
-//         unit_name: unit.unit_name,
-//         system_qty: unit.system_qty,
-//         actual_quantity: Number(entered),
-//     };
-//     showConfirmModal.value = true;
-// }
 function promptUpdate(group, batch) {
     const entered = actualQuantities.value[batch.id];
 
@@ -142,32 +90,8 @@ function promptUpdate(group, batch) {
     };
     showConfirmModal.value = true;
 }
-// Runs when Yes is clicked in the modal: sends it to the backend
-// async function confirmStockUpdate() {
-//     if (!selectedItem.value) return;
-//     saving.value = true;
 
-//     try {
-//         const itemId = selectedItem.value.id;
 
-//         await api.post(`/system-stock/${itemId}/reconcile`, {
-//             actual_quantity: selectedItem.value.actual_quantity,
-//         });
-
-//         toast.success(`${selectedItem.value.medicine_name} updated to ${selectedItem.value.actual_quantity} ${selectedItem.value.unit_name ?? ''}`);
-
-//         delete actualQuantities.value[itemId];
-//         showConfirmModal.value = false;
-//         selectedItem.value = null;
-
-//         await fetchSystemStock();
-//     } catch (error) {
-//         console.error('Failed to update system stock', error);
-//         toast.error(error.response?.data?.message || 'Failed to update system stock');
-//     } finally {
-//         saving.value = false;
-//     }
-// }
 async function confirmStockUpdate() {
     if (!selectedItem.value) return;
     saving.value = true;
@@ -215,7 +139,7 @@ async function confirmStockUpdate() {
                         <tr>
                             <td class="px-4 py-3 font-medium">#</td>
                             <td class="px-4 py-3 font-medium">Product</td>
-                            <td class="px-4 py-3 font-medium flex items-center justify-center" colspan="4">Batches</td>
+                            <td class="px-4 py-3 font-medium" colspan="4">Batches</td>
                         </tr>
                     </thead>
 
