@@ -37,14 +37,13 @@ async function fetchPostedStock() {
 
 const filteredStock = computed(() => {
     const query = searchQuery.value.trim().toLowerCase();
-    if (!query) return groupedStock.value;
+    if (!query) return stockItems.value;
 
-    return groupedStock.value.filter((item) => {
-        return item.name.toLowerCase().includes(query) ||
-        item.units.some((u) =>
-            String(u.unit_name ?? '').toLowerCase().includes(query) ||
-            String(u.quantity ?? '').includes(query),
-        );
+    return stockItems.value.filter((item) => {
+        const name = String(item.name ?? item.medicine_name ?? item.medicine ?? '');
+        return name.toLowerCase().includes(query) ||
+            String(item.unit_name ?? '').toLowerCase().includes(query) ||
+            String(item.quantity ?? '').includes(query);
     });
 });
 //total pages
@@ -81,33 +80,6 @@ function prevPage(){
     goToPage(currentPage.value - 1);
 }
 
-//grouped product with its separate unit names
-const groupedStock = computed(()=>{
-    const groups = {};
-
-    stockItems.value.forEach((item)=>{
-        const name = String(item.name ?? item.medicine_name ??item.medicine ?? '').trim();
-        const key = name.toLowerCase();
-
-        if(!groups[key]){
-            groups[key] = { key, name, units: [] };
-        }
-        groups[key].units.push({
-            id:item.id,
-            unit_name:item.unit_name,
-            quantity:item.quantity,
-        });
-    });
-
-    return Object.values(groups)
-        .map((group) => ({
-            ...group,
-            units: group.units.sort((a, b) =>
-                String(a.unit_name ?? '').localeCompare(String(b.unit_name))
-            ),
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-});
 </script>
 <template>
     <div class="min-h-screen w-full ">
@@ -151,14 +123,16 @@ const groupedStock = computed(()=>{
                     <table class="w-full min-w-[560px] divide-y divide-slate-200 mt-2 text-left text-sm ">
                         <thead class="sticky z-10 border-b border-gray-200 top-0 tracking-wide">
                             <tr>
-                                <th class="px-3 py-2 font-medium">#</th>
-                                <th class="px-3 py-2 font-medium">Product Name</th>
-                                <th class="px-3 py-2 font-medium">Quantity</th>
+                                <th class="px-3 py-2 font-medium  text-center">#</th>
+                                <th class="px-3 py-2 font-medium text-center">Product Name</th>
+                                <th class="px-3 py-2 font-medium text-center">Received Unit</th>
+                                <th class="px-3 py-2 font-medium text-center">Received Base</th>
+                                <th class="px-3 py-2 font-medium text-center">Remaining Base</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             <tr v-if="loading">
-                                <td  class="px-4 py-12 text-center text-gray-500" colspan="3">Loading Stock...</td>
+                                <td  class="px-4 py-12 text-center text-gray-500" colspan="5">Loading Stock...</td>
                             </tr>
                             <tr v-else-if="!stockItems.length">
                                 <td  class="px-4 py-12 text-center text-gray-500" colspan="3">No submitted stock found</td>
@@ -166,14 +140,12 @@ const groupedStock = computed(()=>{
                             <tr v-else-if="filteredStock.length === 0">
                                   <td  class="px-4 py-12 text-center text-gray-500" colspan="3">No search match "{{ searchQuery }}"?</td>
                             </tr>
-                            <tr v-for="(item, index) in paginatedItems" :key="item.key">
-                                <td class="px-3 py-2">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
-                                <td class="px-3 py-2">{{ item.name }}</td>
-                                <td class="px-3 py-2">
-                                    <div v-for="unit in item.units" :key="unit.id">
-                                        {{ unit.quantity }} {{ unit.unit_name }}
-                                    </div>
-                                </td>
+                            <tr v-for="(item, index) in paginatedItems" :key="item.id">
+                                <td class="px-3 py-2  text-center">{{(currentPage -1 )*pageSize+ index + 1 }}</td>
+                                <td class="px-3 py-2 text-center">{{ item.name ?? item.medicine_name ?? item.medicine }}</td>
+                                <td class="px-3 py-2 text-center">{{ item.unit_name }}</td>
+                                <td class="px-3 py-2 text-center">{{ item.quantity }}</td>
+                                <td class="px-3 py-2 text-center">{{ item.remaining_quantity }}</td>
                             </tr>
                         </tbody>
                     </table>
